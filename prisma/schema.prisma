@@ -1,0 +1,126 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Users {
+  Id Int @id @default(autoincrement())
+  Name String
+  Position String
+  CompanyId Int @unique
+  Address String?
+  Email String @unique
+  Password String
+  CreateAt DateTime @default(now())
+  UpdateAt DateTime @updatedAt
+  hashedRT String?
+
+  warehouses Warehouses[]
+
+  @@map("users")
+}
+
+
+model Warehouses {
+  Id Int @id @default(autoincrement())
+  Code String @unique
+  Address String?
+  StaffName String
+  StaffId Int
+  TimeCreate DateTime @default(now())
+  CompanyId Int
+
+  categories Categories[]
+  classifies Classifies[] 
+  products Products[]
+  producers Producers[]
+
+  users Users @relation(fields: [CompanyId], references: [CompanyId])
+
+  @@map("warehouses")
+}
+
+model Producers {
+  Id Int @id @default(autoincrement())
+  Name String
+  Origin String
+  CreateAt DateTime @default(now())
+  WarehouseId Int
+
+  categories Categories[]
+  classifies Classifies[]
+  products Products[]
+
+  warehouse Warehouses @relation(fields: [WarehouseId], references: [Id])
+
+  @@map("producers")
+}
+
+model Categories {
+  Id Int @id @default(autoincrement())
+  Code String @unique
+  Name String
+  CreateAt DateTime @default(now())
+  WarehouseId Int
+  ProducerId Int
+
+  classifies Classifies[]
+  products Products[]
+
+  warehouses Warehouses @relation(fields: [WarehouseId], references: [Id])
+  producers Producers @relation(fields: [ProducerId], references: [Id])
+
+  @@map("categories")
+}
+
+model Classifies {
+  Id Int @id @default(autoincrement())
+  Code String @unique
+  Name String
+  CreateAt DateTime @default(now())
+  CategoryId Int
+  WarehouseId Int
+  ProducerId Int
+
+  product Products[]
+
+  warehouse Warehouses @relation(fields: [WarehouseId], references: [Id])
+  categories Categories @relation(fields: [CategoryId], references: [Id])
+  producer Producers @relation(fields: [ProducerId], references: [Id])
+
+  @@map("classifies")  
+}
+
+model Products {
+  Id Int @id @default(autoincrement())
+  Code String @unique
+  Name String
+  CreateAt DateTime @default(now())
+  CategoryId Int
+  WarehouseId Int
+  ClassifyId Int
+  ProducerId Int
+  Size String
+  Material String
+  Color String
+  Design String
+  describe String
+
+  classifies Classifies @relation(fields: [ClassifyId], references: [Id])
+  categories Categories @relation(fields: [CategoryId], references: [Id])
+  warehouse Warehouses @relation(fields: [WarehouseId], references: [Id])
+  producers Producers @relation(fields: [ProducerId], references: [Id])
+
+  @@map("products")
+}
+// thiếu bảng khách hàng, hóa đơn, Nhập hàng 
