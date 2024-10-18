@@ -4,6 +4,9 @@
 // Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
 // Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
 
+// run migrations để tạo lại các bảng 
+// npx prisma migrate dev --name <migration-name>
+
 generator client {
   provider = "prisma-client-js"
 }
@@ -25,7 +28,9 @@ model Users {
   UpdateAt DateTime @updatedAt
   hashedRT String?
 
-  warehouses Warehouses[]
+  whCompany Warehouses[] @relation("userCompany")
+  whStaff Warehouses[] @relation("usersStaff")
+  producer Producers[]
 
   @@map("users")
 }
@@ -33,6 +38,7 @@ model Users {
 
 model Warehouses {
   Id Int @id @default(autoincrement())
+  Name String
   Code String @unique
   Address String?
   StaffName String
@@ -43,9 +49,9 @@ model Warehouses {
   categories Categories[]
   classifies Classifies[] 
   products Products[]
-  producers Producers[]
 
-  users Users @relation(fields: [CompanyId], references: [CompanyId])
+  userCompany Users @relation("userCompany", fields: [CompanyId], references: [CompanyId])
+  usersStaff Users @relation("usersStaff", fields: [StaffId], references: [Id])
 
   @@map("warehouses")
 }
@@ -55,13 +61,13 @@ model Producers {
   Name String
   Origin String
   CreateAt DateTime @default(now())
-  WarehouseId Int
+  CompanyId Int
 
   categories Categories[]
   classifies Classifies[]
   products Products[]
 
-  warehouse Warehouses @relation(fields: [WarehouseId], references: [Id])
+  companyId Users @relation(fields: [CompanyId], references: [CompanyId])
 
   @@map("producers")
 }
@@ -115,6 +121,7 @@ model Products {
   Color String
   Design String
   describe String
+  quantity Int
 
   classifies Classifies @relation(fields: [ClassifyId], references: [Id])
   categories Categories @relation(fields: [CategoryId], references: [Id])

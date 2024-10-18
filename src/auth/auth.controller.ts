@@ -5,7 +5,7 @@ import { Tokens } from './types';
 import { AuthGuard } from '@nestjs/passport';
 import { Request } from 'express';
 import { AtGuard, RtGuard } from './common/guards';
-import { GetUser } from './common/decorators';
+import { GetUserInfor } from './common/decorators';
 
 @Controller('auth')
 export class AuthController {
@@ -27,7 +27,7 @@ export class AuthController {
   @UseGuards(AtGuard)
   @Post('logout') // thoat
   @HttpCode(HttpStatus.OK)
-  logoutUser(@GetUser('id') userId: number) {
+  logoutUser(@GetUserInfor('id') userId: number) {
     return this.authService.logoutUser(userId);
   }
 
@@ -35,8 +35,8 @@ export class AuthController {
   @Post('refresh')
   @HttpCode(HttpStatus.OK)
   refreshToken(
-    @GetUser('id') userId: number,
-    @GetUser('refreshToken') rtToken: string
+    @GetUserInfor('id') userId: number,
+    @GetUserInfor('refreshToken') rtToken: string
   ) {
     return this.authService.refreshToken(userId, rtToken);
   }

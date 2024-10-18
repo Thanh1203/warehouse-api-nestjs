@@ -1,0 +1,1 @@
+export const FieldsToDelete = ['Password', 'CreateAt', 'UpdateAt', 'hashedRT']
