@@ -4,6 +4,7 @@ import { signInDto, signUpDto } from './dto';
 import * as argon from 'argon2';
 import { Tokens } from './types';
 import { JwtService } from '@nestjs/jwt';
+import { FieldsToDelete } from 'src/constants';
 
 @Injectable()
 export class AuthService {
@@ -23,13 +24,28 @@ export class AuthService {
           Address: dto.address,
           Email: dto.email,
           Password: hashedPassword
+        },
+        select: {
+          Id: true,
+          Name: true,
+          Email: true,
+          Position: true,
+          CompanyId: true,
+          Address: true,
         }
       })
   
-      const tokens = await this.getTokens(newUser.Id, newUser.Email, newUser.Position)
+      const tokens = await this.getTokens(newUser.Id, newUser.Email, newUser.Position, newUser.CompanyId)
       await this.updateRtHash(newUser.Id, tokens.refresh_token);
-  
-      return tokens;
+      
+      FieldsToDelete.forEach(field => {
+        delete newUser[field];
+      })
+
+      return {
+        ...newUser,
+        ...tokens
+      };
 
     } catch (error) {
       if (error.code === 'P2002') {
@@ -56,10 +72,17 @@ export class AuthService {
       throw new ForbiddenException('Incorrect password')
     }
 
-    const tokens = await this.getTokens(user.Id, user.Email, user.Position)
+    const tokens = await this.getTokens(user.Id, user.Email, user.Position, user.CompanyId)
     await this.updateRtHash(user.Id, tokens.refresh_token);
 
-    return tokens;
+    FieldsToDelete.forEach(field => {
+      delete user[field];
+    })
+
+    return {
+      ...user,
+      ...tokens
+    };
   }
   
   async logoutUser(userId: number) { 
@@ -97,8 +120,7 @@ export class AuthService {
       throw new ForbiddenException("Acces denied")
     }
 
-    const tokens = await this.getTokens(user.Id, user.Email, user.Position)
-
+    const tokens = await this.getTokens(user.Id, user.Email, user.Position, user.CompanyId)
 
     await this.updateRtHash(user.Id, tokens.refresh_token)
     return tokens;
@@ -125,12 +147,13 @@ export class AuthService {
     }
   }
 
-  async getTokens(userId: number, email: string, role: string): Promise<Tokens> {
+  async getTokens(userId: number, email: string, role: string, companyId: number): Promise<Tokens> {
     const [at, rt] = await Promise.all([
       this.jwtService.signAsync({
         id: userId,
         email,
         role,
+        companyId,
       }, {
         secret: 'at-secret',
         expiresIn: '15m',
@@ -139,6 +162,7 @@ export class AuthService {
         id: userId,
         email,
         role,
+        companyId,
       }, {
         secret: 'rt-secret',
         expiresIn: '30d',
