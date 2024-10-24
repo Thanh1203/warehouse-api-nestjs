@@ -73,7 +73,7 @@ export class WarehousesService {
       where: {WarehouseId: warehouseId, quantity: 0}
     })
 
-    if (checkProductInWh) {
+    if (!checkProductInWh) {
       throw new ForbiddenException('Still in stock')
     }
 
