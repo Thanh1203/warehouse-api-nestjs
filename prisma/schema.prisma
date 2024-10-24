@@ -30,7 +30,8 @@ model Users {
 
   whCompany Warehouses[] @relation("userCompany")
   whStaff Warehouses[] @relation("usersStaff")
-  producer Producers[]
+  suppliers Suppliers[]
+  products Products[]
 
   @@map("users")
 }
@@ -56,12 +57,14 @@ model Warehouses {
   @@map("warehouses")
 }
 
-model Producers {
+model Suppliers {
   Id Int @id @default(autoincrement())
+  Code String @unique
   Name String
   Origin String
   CreateAt DateTime @default(now())
   CompanyId Int
+  IsCollab Boolean
 
   categories Categories[]
   classifies Classifies[]
@@ -69,7 +72,7 @@ model Producers {
 
   companyId Users @relation(fields: [CompanyId], references: [CompanyId])
 
-  @@map("producers")
+  @@map("Suppliers")
 }
 
 model Categories {
@@ -78,13 +81,13 @@ model Categories {
   Name String
   CreateAt DateTime @default(now())
   WarehouseId Int
-  ProducerId Int
+  SupplierId Int
 
   classifies Classifies[]
   products Products[]
 
   warehouses Warehouses @relation(fields: [WarehouseId], references: [Id])
-  producers Producers @relation(fields: [ProducerId], references: [Id])
+  suppliers Suppliers @relation(fields: [SupplierId], references: [Id])
 
   @@map("categories")
 }
@@ -96,13 +99,13 @@ model Classifies {
   CreateAt DateTime @default(now())
   CategoryId Int
   WarehouseId Int
-  ProducerId Int
+  SupplierId Int
 
   product Products[]
 
   warehouse Warehouses @relation(fields: [WarehouseId], references: [Id])
   categories Categories @relation(fields: [CategoryId], references: [Id])
-  producer Producers @relation(fields: [ProducerId], references: [Id])
+  suppliers Suppliers @relation(fields: [SupplierId], references: [Id])
 
   @@map("classifies")  
 }
@@ -115,7 +118,8 @@ model Products {
   CategoryId Int
   WarehouseId Int
   ClassifyId Int
-  ProducerId Int
+  SupplierId Int
+  CompanyId Int
   Size String
   Material String
   Color String
@@ -126,7 +130,9 @@ model Products {
   classifies Classifies @relation(fields: [ClassifyId], references: [Id])
   categories Categories @relation(fields: [CategoryId], references: [Id])
   warehouse Warehouses @relation(fields: [WarehouseId], references: [Id])
-  producers Producers @relation(fields: [ProducerId], references: [Id])
+  suppliers Suppliers @relation(fields: [SupplierId], references: [Id])
+  companyId Users @relation(fields: [CompanyId], references: [CompanyId])
+
 
   @@map("products")
 }
