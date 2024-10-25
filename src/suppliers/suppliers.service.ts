@@ -7,7 +7,7 @@ export class SuppliersService {
   constructor(private prismaService: PrismaService) {}
 
   async getSupplier(companyId: number) {
-    return await this.prismaService.suppliers.findMany({ where: { CompanyId: companyId} });
+    return await this.prismaService.suppliers.findMany({ where: { CompanyId: companyId, IsCollab: true} });
   }
 
   async searchSupplier(companyId: number, name: string) {
