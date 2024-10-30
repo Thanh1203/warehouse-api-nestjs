@@ -10,38 +10,37 @@ export class WarehousesController {
   constructor(private readonly warehousesService: WarehousesService) { }
   
   @Get()
-  gethWarehouses(
+  async gethWarehouses(
     @GetUserInfor('companyId') companyId: number,
     @Query('name') name?: string
   ) {
     if (name) {
-      return this.warehousesService.searchWarehouse(companyId, name);
+      return await this.warehousesService.searchWarehouse(companyId, name);
     } else {
-      return this.warehousesService.gethWarehouses(companyId);
+      return await this.warehousesService.gethWarehouses(companyId);
     }
   }
     
   @Post()
-  createWarehouse(
+  async createWarehouse(
     @GetUserInfor('companyId') companyId: number,
     @Body() dto: InsertWarehouse
   ) {
-    return this.warehousesService.createWarehouse(companyId, dto);
+    return await this.warehousesService.createWarehouse(companyId, dto);
   }
 
   @Patch(':id')
-  updateWarehouse(
+  async updateWarehouse(
     @Param('id', ParseIntPipe) warehouseId: number,
     @Body() dto: UpdateWarehouse
   ) {
-    return this.warehousesService.updateWarehouse(warehouseId, dto);
+    return await this.warehousesService.updateWarehouse(warehouseId, dto);
   }
 
-
   @Delete(':id')
-  deleteWarehouse(
+  async deleteWarehouse(
     @Param('id', ParseIntPipe) warehouseId: number,
   ) {
-    return this.warehousesService.deleteWarehouse(warehouseId);
+    return await this.warehousesService.deleteWarehouse(warehouseId);
   }
 }

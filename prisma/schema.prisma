@@ -32,6 +32,8 @@ model Users {
   whStaff Warehouses[] @relation("usersStaff")
   suppliers Suppliers[]
   products Products[]
+  categories Categories[]
+  classifies Classifies[]
 
   @@map("users")
 }
@@ -82,12 +84,15 @@ model Categories {
   CreateAt DateTime @default(now())
   WarehouseId Int
   SupplierId Int
+  CompanyId Int
+  IsRestock Boolean
 
   classifies Classifies[]
   products Products[]
 
   warehouses Warehouses @relation(fields: [WarehouseId], references: [Id])
   suppliers Suppliers @relation(fields: [SupplierId], references: [Id])
+  companyId Users @relation(fields: [CompanyId], references: [CompanyId])
 
   @@map("categories")
 }
@@ -100,12 +105,15 @@ model Classifies {
   CategoryId Int
   WarehouseId Int
   SupplierId Int
+  CompanyId Int
+  IsRestock Boolean
 
   product Products[]
 
   warehouse Warehouses @relation(fields: [WarehouseId], references: [Id])
   categories Categories @relation(fields: [CategoryId], references: [Id])
   suppliers Suppliers @relation(fields: [SupplierId], references: [Id])
+  companyId Users @relation(fields: [CompanyId], references: [CompanyId])
 
   @@map("classifies")  
 }
@@ -126,6 +134,7 @@ model Products {
   Design String
   describe String
   quantity Int
+  IsRestock Boolean
 
   classifies Classifies @relation(fields: [ClassifyId], references: [Id])
   categories Categories @relation(fields: [CategoryId], references: [Id])

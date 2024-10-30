@@ -1,8 +1,9 @@
-import { Body, Controller, Delete, Get, Param, ParseIntPipe, Patch, Post, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, ParseArrayPipe, ParseIntPipe, Patch, Post, Query, UseGuards } from '@nestjs/common';
 import { SuppliersService } from './suppliers.service';
 import { AtGuard } from 'src/auth/common/guards';
 import { GetUserInfor } from 'src/auth/common/decorators';
 import { InsertSupplier, UpdateSupplier } from './dto';
+import { ParseIntArrayPipe } from 'pipes';
 
 @UseGuards(AtGuard)
 @Controller('suppliers')
@@ -10,38 +11,38 @@ export class SuppliersController {
   constructor(private readonly suppliersService: SuppliersService) { }
   
   @Get()
-  getSupplier(
+  async getSupplier(
     @GetUserInfor('companyId') companyId: number,
     @Query('name') name?: string
   ) {
     if (!name) {
-      return this.suppliersService.getSupplier(companyId);
+      return await this.suppliersService.getSupplier(companyId);
     } else {
-      return this.suppliersService.searchSupplier(companyId, name);
+      return await this.suppliersService.searchSupplier(companyId, name);
     }
   }
 
   @Post()
-  createSupplier(
+  async createSupplier(
     @GetUserInfor('companyId') companyId: number,
     @Body() dto: InsertSupplier
   ) {
-    return this.suppliersService.createSupplier(companyId, dto);
+    return await this.suppliersService.createSupplier(companyId, dto);
   }
 
   @Patch(':id')
-  updateSupplier(
+  async updateSupplier(
     @Param('id', ParseIntPipe) supplierId: number,
     @Body() dto: UpdateSupplier
   ) { 
-    return this.suppliersService.updateSupplier(supplierId, dto);
+    return await this.suppliersService.updateSupplier(supplierId, dto);
   }
 
-  @Delete(':id')
-  deleteSupplier(
-    @Param('id', ParseIntPipe) supplierId: number,
+  @Delete()
+  async deleteSupplier(
+    @Body('supplierIds', ParseIntArrayPipe) supplierIds: number[],
     @GetUserInfor('companyId') companyId: number,
-  ) {
-    return this.suppliersService.deleteSupplier(supplierId, companyId);
+  ): Promise<{ message: string; }> {
+    return await this.suppliersService.deleteSupplier(supplierIds, companyId);
   }
 }

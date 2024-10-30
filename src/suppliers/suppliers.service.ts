@@ -59,42 +59,62 @@ export class SuppliersService {
     })
   }
 
-  async deleteSupplier(supplierId: number, companyId: number) {
+  async deleteSupplier(supplierIds: number[], companyId: number): Promise<{ message: string }> {
+    const ids = Array.isArray(supplierIds) ? supplierIds : [supplierIds];
     try {
-      await this.prismaService.suppliers.update({
-        where: { Id: supplierId },
+      await this.prismaService.suppliers.updateMany({
+        where: { Id: { in: ids } },
         data: { IsCollab: false },
       });
 
       return {
-        message: 'Delete successful',
+        message: 'Delete suppliers successfully',
       };
     } catch (error) {
-      throw new ForbiddenException('Faild to delete supplier');
+      throw new ForbiddenException('Failed to delete suppliers');
     } finally {
       setTimeout(async () => {
         try {
-          await this.prismaService.products.deleteMany({ where: { SupplierId: supplierId, quantity: 0 } });
-          await this.prismaService.classifies.deleteMany({ where: { SupplierId: supplierId, product: { none: {} } } });
-          await this.prismaService.categories.deleteMany({ where: { SupplierId: supplierId, classifies: { none: {} } } });
-          if (this.checkStock(companyId, supplierId)) {
-            await this.prismaService.suppliers.delete({
-              where: { Id: supplierId }
-            })
+          await this.prismaService.products.deleteMany({ where: { SupplierId: { in: ids }, quantity: 0 } });
+          await this.prismaService.classifies.deleteMany({ where: { SupplierId: { in: ids }, product: { none: {} } } });
+          await this.prismaService.categories.deleteMany({ where: { SupplierId: { in: ids }, classifies: { none: {} } } });
+
+          const stockMap = await this.checkStock(companyId, ids);
+          for (const supplierId of ids) {
+            if (!stockMap[supplierId]) {
+              await this.prismaService.suppliers.delete({
+                where: { Id: supplierId }
+              });
+            }
           }
         } catch (error) {
           console.log(error);
         }
-      }, 0)
+      }, 0);
     }
   }
 
-  async checkStock(id1, id2): Promise<boolean> {
-    const check = await this.prismaService.products.findFirst({ where: { CompanyId: id1, SupplierId: id2, quantity: { gt: 0 } } });
-    if (check) {
-      return true;
-    } else {
-      return false;
-    }
+  async checkStock(companyId: number, supplierIds: number[]): Promise<{ [key: number]: boolean }> {
+    const results = await this.prismaService.products.findMany({
+      where: {
+        CompanyId: companyId,
+        SupplierId: { in: supplierIds },
+        quantity: { gt: 0 },
+      },
+      select: {
+        SupplierId: true,
+      },
+    });
+
+    const stockMap = supplierIds.reduce((acc, id) => {
+      acc[id] = false;
+      return acc;
+    }, {} as { [key: number]: boolean });
+
+    results.forEach(result => {
+      stockMap[result.SupplierId] = true;
+    });
+
+    return stockMap;
   }
 }
