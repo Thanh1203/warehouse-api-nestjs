@@ -1,0 +1,1 @@
+sửa lại các thuộc tính có thể cập nhật của chủng loại (category)

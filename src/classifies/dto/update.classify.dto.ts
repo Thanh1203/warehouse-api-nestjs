@@ -1,14 +1,15 @@
 import { Transform } from "class-transformer";
 import { IsBoolean, IsNumber, IsOptional, IsString } from "class-validator";
 
-export class UpdateCategory {
-  @IsOptional()
+export class UpdateClassify {
   @IsString()
-  name?: string;
-
   @IsOptional()
-  @IsBoolean()
-  isRestock?: boolean;
+  name?: string
+  
+  @Transform(({ value }) => parseInt(value, 10))
+  @IsNumber()
+  @IsOptional()
+  categoryId?: number
 
   @Transform(({ value }) => parseInt(value, 10))
   @IsNumber()
@@ -19,4 +20,8 @@ export class UpdateCategory {
   @IsNumber()
   @IsOptional()
   warehouseId?: number
+
+  @IsOptional()
+  @IsBoolean()
+  isRestock?: boolean;
 }
