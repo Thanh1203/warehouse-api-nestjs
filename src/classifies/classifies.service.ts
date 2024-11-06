@@ -60,11 +60,11 @@ export class ClassifiesService {
     return await this.prisnaService.classifies.update({
       where: { Id: classifyId, CompanyId: companyId },
       data: {
-        Name: classifyInfo.name,
-        CategoryId: classifyInfo.categoryId,
-        SupplierId: classifyInfo.supplierId,
-        WarehouseId: classifyInfo.warehouseId,
-        IsRestock: classifyInfo.isRestock
+      Name: classifyInfo.name,
+      CategoryId: Number(classifyInfo.categoryId),
+      SupplierId: Number(classifyInfo.supplierId),
+      WarehouseId: Number(classifyInfo.warehouseId),
+      IsRestock: classifyInfo.isRestock
       }
     });
   }
@@ -87,8 +87,15 @@ export class ClassifiesService {
       setTimeout(async () => {
         try {
           await this.prisnaService.products.deleteMany({ where: { ClassifyId: { in: ids }, quantity: 0 } });
-
-        // chuwa xong
+          
+          const stockMap = await this.checkStock(companyId, ids);
+          for (const classifyId of ids) {
+            if (!stockMap[classifyId]) {
+              await this.prisnaService.classifies.delete({
+                where: { Id: classifyId }
+              });
+            }
+          }
         } catch (error) {
           console.log(error);
         }
