@@ -36,6 +36,7 @@ model Users {
   classifies Classifies[]
   price_configuration Price_Configuration[]
   inventory_items Inventory_Items[]
+  StockTransfers StockTransfers[]
 
   @@map("users")
 }
@@ -53,6 +54,8 @@ model Warehouses {
   classifies Classifies[]
   price_configuration Price_Configuration[]
   inventory_items Inventory_Items[]
+  transProductFrom StockTransfers[] @relation("FromWarehouse")
+  transProductTo StockTransfers[] @relation("ToWarehouse")
 
   userCompany Users @relation("userCompany", fields: [CompanyId], references: [CompanyId])
   usersStaff Users @relation("usersStaff", fields: [StaffId], references: [Id])
@@ -72,6 +75,7 @@ model Suppliers {
   categories Categories[]
   classifies Classifies[]
   products Products[]
+  purchase_orders Purchase_Orders[]
 
   companyId Users @relation(fields: [CompanyId], references: [CompanyId])
 
@@ -145,7 +149,11 @@ model Products {
 
   price_configuration Price_Configuration[]
   inventory_items Inventory_Items[]
-
+  invoice_details Invoice_Details[]
+  purchase_order_details Purchase_Order_Details[]
+  purchase_return_details Purchase_Return_Details[]
+  stockTransfers_details StockTransfers_Details[]
+  
   @@map("products")
 }
 
@@ -187,4 +195,142 @@ model Inventory_Items {
 
   @@map("inventory_items")
 }
-// thiếu bảng khách hàng, hóa đơn, Nhập hàng, cấu hình giá bán,chuyển kho
+
+model Customers {
+  Id Int @id @default(autoincrement())
+  Name String
+  Phone String @unique
+  Address String
+  Email String
+  CreateAt DateTime @default(now())
+  UpdateAt DateTime @updatedAt
+  total_spent Float @default(0)
+  purchase_count Int @default(0)
+  
+  invoices Invoices[]
+
+  @@map("customers")
+}
+
+model Invoices {
+  Id Int @id @default(autoincrement())
+  Code String @unique
+  CustomerId Int
+  StaffId Int
+  CreateAt DateTime @default(now())
+  Total Float @default(0)
+
+  customers Customers @relation(fields: [CustomerId], references: [Id])
+
+  invoice_details Invoice_Details[]
+
+  @@map("invoices")
+}
+
+model Invoice_Details {
+  Id Int @id @default(autoincrement())
+  InvoiceId Int
+  ProductId Int
+  Quantity Int
+  Price Float
+  Total Float
+  CreateAt DateTime @default(now())
+  UpdateAt DateTime @updatedAt
+
+  invoices Invoices @relation(fields: [InvoiceId], references: [Id])
+  products Products @relation(fields: [ProductId], references: [Id])
+  
+  @@map("invoice_details")
+}
+
+enum PurchaseOrderStatus {
+  PENDING // đang nháp
+  RECEIVED // đã nhận
+  CANCELLED // đã hủy
+  SENT // đã gửi đơn đặt hàng
+  RECEIVING // đang nhận hàng
+  RECEIVED_PART // đã nhận một phần hàng
+}
+
+model Purchase_Orders {
+  Id Int @id @default(autoincrement())
+  Code String @unique
+  SupplierId Int
+  StaffId Int
+  Total Float @default(0)
+  CreateAt DateTime @default(now())
+  UpdateAt DateTime @updatedAt
+  Status PurchaseOrderStatus @default(PENDING)
+
+  suppliers Suppliers @relation(fields: [SupplierId], references: [Id])
+
+  purchase_order_details Purchase_Order_Details[]
+  purchase_return_details Purchase_Return_Details[]
+
+  @@map("purchase_orders")
+}
+
+model Purchase_Order_Details {
+  Id Int @id @default(autoincrement())
+  PurchaseOrderId Int
+  ProductId Int
+  Quantity Int
+  CreateAt DateTime @default(now())
+  UpdateAt DateTime @updatedAt
+  Price Float @default(0)
+  Total Float @default(0)
+
+  purchase_orders Purchase_Orders @relation(fields: [PurchaseOrderId], references: [Id])
+  products Products @relation(fields: [ProductId], references: [Id])
+
+  @@map("purchase_order_details")
+}
+
+model Purchase_Return_Details {
+  Id Int @id @default(autoincrement())
+  PurchaseOrderId Int
+  ProductId Int
+  Quantity Int
+  CreateAt DateTime @default(now())
+  UpdateAt DateTime @updatedAt
+  Price Float @default(0)
+  Total Float @default(0)
+
+  purchase_orders Purchase_Orders @relation(fields: [PurchaseOrderId], references: [Id])
+  products Products @relation(fields: [ProductId], references: [Id])
+
+  @@map("purchase_return_details")
+}
+
+model StockTransfers {
+  Id Int @id @default(autoincrement())
+  StaffId Int
+  Code String @unique
+  Quantity Int
+  FromWarehouseId Int
+  ToWarehouseId Int
+  CreateAt DateTime @default(now())
+  UpdateAt DateTime @updatedAt
+
+  staff Users @relation(fields: [StaffId], references: [Id])
+  fromWarehouse  Warehouses @relation("FromWarehouse", fields: [FromWarehouseId], references: [Id])
+  toWarehouse    Warehouses @relation("ToWarehouse", fields: [ToWarehouseId], references: [Id])
+
+  StockTransfers_details StockTransfers_Details[]
+
+  @@map("stockTransfers")
+}
+
+model StockTransfers_Details {
+  Id Int @id @default(autoincrement())
+  TransProductId Int
+  ProductId Int
+  Quantity Int
+  CreateAt DateTime @default(now())
+  UpdateAt DateTime @updatedAt
+
+  StockTransfers StockTransfers @relation(fields: [TransProductId], references: [Id])
+  products Products @relation(fields: [ProductId], references: [Id])
+
+  @@map("stockTransfers_details")
+}
