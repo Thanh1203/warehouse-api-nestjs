@@ -7,22 +7,51 @@ export class WarehousesService {
   constructor(private prismaService: PrismaService) { }
   
   async gethWarehouses(companyId: number) {
-    const warehouses = await this.prismaService.warehouses.findMany({ where: { CompanyId: companyId } });
-    return warehouses;
+    const result = await this.prismaService.warehouses.findMany({
+      where: { CompanyId: companyId },
+      include: {
+        usersStaff: {
+          select: {
+            Name: true,
+          }
+        }
+      }
+    });
+
+    return result.map(wh => {
+      const { usersStaff, ...warehouses } = wh;
+      return {
+        ...warehouses,
+        staffName: usersStaff.Name
+      }
+    });
   }
 
   async searchWarehouse(companyId: number, name: string) {
-    const warehouses = await this.prismaService.warehouses.findMany({
+    const result = await this.prismaService.warehouses.findMany({
       where: {
         CompanyId: companyId,
         Name: {
           contains: name,
           mode: 'insensitive',
+        },
+      },
+      include: {
+        usersStaff: {
+          select: {
+            Name: true,
+          }
         }
       }
     })
 
-    return warehouses;
+    return result.map(wh => { 
+      const { usersStaff, ...warehouses } = wh;
+      return {
+        ...warehouses,
+        staffName: usersStaff.Name
+      }
+    });
   }
 
   async createWarehouse(companyId: number, whInfo: InsertWarehouse) {
@@ -32,7 +61,6 @@ export class WarehousesService {
         Name: whInfo.name,
         Address: whInfo.address,
         StaffId: Number(whInfo.staffId),
-        StaffName: whInfo.staffName,
         CompanyId: companyId,
       }
     })
@@ -55,7 +83,6 @@ export class WarehousesService {
         Name: whInfo.name,
         Address: whInfo.address,
         StaffId: Number(whInfo.staffId),
-        StaffName: whInfo.staffName,
       }
     })
   }

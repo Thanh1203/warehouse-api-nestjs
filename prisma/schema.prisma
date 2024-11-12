@@ -40,13 +40,11 @@ model Users {
   @@map("users")
 }
 
-
 model Warehouses {
   Id Int @id @default(autoincrement())
   Name String
   Code String @unique
   Address String?
-  StaffName String
   StaffId Int
   TimeCreate DateTime @default(now())
   CompanyId Int
