@@ -1,6 +1,7 @@
 import { ForbiddenException, Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { InsertCategory, UpdateCategory } from './dto';
+import { checkStock } from '@/helpers';
 
 @Injectable()
 export class CategoriesService {
@@ -59,6 +60,8 @@ export class CategoriesService {
       data: {
         Name: cateInfo.name,
         IsRestock: cateInfo.isRestock,
+        ...(cateInfo.supplierId && { SupplierId: Number(cateInfo.supplierId) }),
+        ...(cateInfo.warehouseId && { WarehouseId: Number(cateInfo.warehouseId) }),
       }
     });
   }
@@ -80,10 +83,10 @@ export class CategoriesService {
     } finally {
       setTimeout(async () => {
         try {
-          await this.prismaService.products.deleteMany({ where: { CategoryId: { in: ids }, quantity: 0 } });
+          await this.prismaService.products.deleteMany({ where: { CategoryId: { in: ids }, inventory_items: { every: { Quantity: 0 } } } });
           await this.prismaService.classifies.deleteMany({ where: { CategoryId: { in: ids }, product: { none: {} } } });
 
-          const stockMap = await this.checkStock(companyId, ids);
+          const stockMap = await checkStock(companyId, ids);
           for (const categoryId of ids) {
             if (!stockMap[categoryId]) {
               await this.prismaService.categories.delete({
@@ -96,29 +99,5 @@ export class CategoriesService {
         }
       }, 0);
     }
-  }
-
-  async checkStock(companyId: number, categoryIds: number[]): Promise<{ [key: number]: boolean }> {
-    const results = await this.prismaService.products.findMany({
-      where: {
-        CompanyId: companyId,
-        CategoryId: { in: categoryIds },
-        quantity: { gt: 0 },
-      },
-      select: {
-        CategoryId: true,
-      },
-    });
-
-    const stockMap = categoryIds.reduce((acc, id) => {
-      acc[id] = false;
-      return acc;
-    }, {} as { [key: number]: boolean });
-
-    results.forEach(result => {
-      stockMap[result.CategoryId] = true;
-    });
-
-    return stockMap;
   }
 }
