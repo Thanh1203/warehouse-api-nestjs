@@ -34,6 +34,8 @@ model Users {
   products Products[]
   categories Categories[]
   classifies Classifies[]
+  price_configuration Price_Configuration[]
+  inventory_items Inventory_Items[]
 
   @@map("users")
 }
@@ -50,8 +52,9 @@ model Warehouses {
   CompanyId Int
 
   categories Categories[]
-  classifies Classifies[] 
-  products Products[]
+  classifies Classifies[]
+  price_configuration Price_Configuration[]
+  inventory_items Inventory_Items[]
 
   userCompany Users @relation("userCompany", fields: [CompanyId], references: [CompanyId])
   usersStaff Users @relation("usersStaff", fields: [StaffId], references: [Id])
@@ -123,26 +126,67 @@ model Products {
   Code String @unique
   Name String
   CreateAt DateTime @default(now())
+  UpdateAt DateTime @updatedAt
+
   CategoryId Int
-  WarehouseId Int
   ClassifyId Int
   SupplierId Int
   CompanyId Int
+
   Size String
   Material String
   Color String
   Design String
-  describe String
-  quantity Int
+  Describe String
   IsRestock Boolean
 
   classifies Classifies @relation(fields: [ClassifyId], references: [Id])
   categories Categories @relation(fields: [CategoryId], references: [Id])
-  warehouse Warehouses @relation(fields: [WarehouseId], references: [Id])
   suppliers Suppliers @relation(fields: [SupplierId], references: [Id])
   companyId Users @relation(fields: [CompanyId], references: [CompanyId])
 
+  price_configuration Price_Configuration[]
+  inventory_items Inventory_Items[]
 
   @@map("products")
 }
-// thiếu bảng khách hàng, hóa đơn, Nhập hàng 
+
+model Price_Configuration {
+  Id Int @id @default(autoincrement())
+  ProductId Int
+  WarehouseId Int
+  CompanyId Int
+  Price Float @default(0)
+  CreateAt DateTime @default(now())
+  UpdateAt DateTime @updatedAt
+
+  products Products @relation(fields: [ProductId], references: [Id])
+  warehouse Warehouses @relation(fields: [WarehouseId], references: [Id])
+  companyId Users @relation(fields: [CompanyId], references: [CompanyId])
+
+  @@map("price_configuration")
+}
+
+enum ProductStatus {
+  IN_STOCK
+  LOW_STOCK
+  OUT_OF_STOCK
+}
+
+model Inventory_Items {
+  Id Int @id @default(autoincrement())
+  ProductId Int
+  WarehouseId Int
+  CompanyId Int
+  Quantity Int @default(0)
+  CreateAt DateTime @default(now())
+  UpdateAt DateTime @updatedAt
+  Status ProductStatus @default(OUT_OF_STOCK)
+
+  products Products @relation(fields: [ProductId], references: [Id])
+  warehouse Warehouses @relation(fields: [WarehouseId], references: [Id])
+  companyId Users @relation(fields: [CompanyId], references: [CompanyId])
+
+  @@map("inventory_items")
+}
+// thiếu bảng khách hàng, hóa đơn, Nhập hàng, cấu hình giá bán,chuyển kho

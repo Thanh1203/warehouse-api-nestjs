@@ -1,1 +1,2 @@
-sửa lại các thuộc tính có thể cập nhật của chủng loại (category)
+hoàn thiện tìm kiếm sản phẩm (ưu tiên)
+sửa lại các hàm trả get list 

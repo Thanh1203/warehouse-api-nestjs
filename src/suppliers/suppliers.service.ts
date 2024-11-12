@@ -1,6 +1,7 @@
 import { ForbiddenException, Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { InsertSupplier, UpdateSupplier } from './dto';
+import { checkStock } from '@/helpers';
 
 @Injectable()
 export class SuppliersService {
@@ -75,11 +76,11 @@ export class SuppliersService {
     } finally {
       setTimeout(async () => {
         try {
-          await this.prismaService.products.deleteMany({ where: { SupplierId: { in: ids }, quantity: 0 } });
+          await this.prismaService.products.deleteMany({ where: { SupplierId: { in: ids }, inventory_items: { every: { Quantity: 0 } } } });
           await this.prismaService.classifies.deleteMany({ where: { SupplierId: { in: ids }, product: { none: {} } } });
           await this.prismaService.categories.deleteMany({ where: { SupplierId: { in: ids }, classifies: { none: {} } } });
 
-          const stockMap = await this.checkStock(companyId, ids);
+          const stockMap = await checkStock(companyId, ids);
           for (const supplierId of ids) {
             if (!stockMap[supplierId]) {
               await this.prismaService.suppliers.delete({
@@ -92,29 +93,5 @@ export class SuppliersService {
         }
       }, 0);
     }
-  }
-
-  async checkStock(companyId: number, supplierIds: number[]): Promise<{ [key: number]: boolean }> {
-    const results = await this.prismaService.products.findMany({
-      where: {
-        CompanyId: companyId,
-        SupplierId: { in: supplierIds },
-        quantity: { gt: 0 },
-      },
-      select: {
-        SupplierId: true,
-      },
-    });
-
-    const stockMap = supplierIds.reduce((acc, id) => {
-      acc[id] = false;
-      return acc;
-    }, {} as { [key: number]: boolean });
-
-    results.forEach(result => {
-      stockMap[result.SupplierId] = true;
-    });
-
-    return stockMap;
   }
 }
