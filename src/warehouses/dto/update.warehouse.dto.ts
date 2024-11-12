@@ -10,10 +10,6 @@ export class UpdateWarehouse {
   @IsString()
   address?: string
 
-  @IsOptional()
-  @IsString()
-  staffName?: string
-
   @Transform(({ value }) => parseInt(value, 10))
   @IsNumber()
   @IsOptional()

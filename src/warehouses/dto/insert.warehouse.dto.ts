@@ -14,10 +14,6 @@ export class InsertWarehouse {
   @IsString()
   address?: string
 
-  @IsOptional()
-  @IsString()
-  staffName?: string
-
   @Transform(({ value }) => parseInt(value, 10))
   @IsNotEmpty()
   @IsNumber()
