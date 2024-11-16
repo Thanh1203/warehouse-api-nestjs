@@ -37,6 +37,7 @@ model Users {
   price_configuration Price_Configuration[]
   inventory_items Inventory_Items[]
   StockTransfers StockTransfers[]
+  customers Customers[]
 
   @@map("users")
 }
@@ -56,6 +57,7 @@ model Warehouses {
   inventory_items Inventory_Items[]
   transProductFrom StockTransfers[] @relation("FromWarehouse")
   transProductTo StockTransfers[] @relation("ToWarehouse")
+  customers Customers[]
 
   userCompany Users @relation("userCompany", fields: [CompanyId], references: [CompanyId])
   usersStaff Users @relation("usersStaff", fields: [StaffId], references: [Id])
@@ -149,10 +151,6 @@ model Products {
 
   price_configuration Price_Configuration[]
   inventory_items Inventory_Items[]
-  invoice_details Invoice_Details[]
-  purchase_order_details Purchase_Order_Details[]
-  purchase_return_details Purchase_Return_Details[]
-  stockTransfers_details StockTransfers_Details[]
   
   @@map("products")
 }
@@ -201,13 +199,18 @@ model Customers {
   Name String
   Phone String @unique
   Address String
-  Email String
+  Email String?
   CreateAt DateTime @default(now())
   UpdateAt DateTime @updatedAt
   total_spent Float @default(0)
   purchase_count Int @default(0)
-  
+  CompanyId Int
+  WarehouseId Int
+
   invoices Invoices[]
+
+  companyId Users @relation(fields: [CompanyId], references: [CompanyId])
+  warehouse Warehouses @relation(fields: [WarehouseId], references: [Id])
 
   @@map("customers")
 }
@@ -238,7 +241,6 @@ model Invoice_Details {
   UpdateAt DateTime @updatedAt
 
   invoices Invoices @relation(fields: [InvoiceId], references: [Id])
-  products Products @relation(fields: [ProductId], references: [Id])
   
   @@map("invoice_details")
 }
@@ -281,7 +283,6 @@ model Purchase_Order_Details {
   Total Float @default(0)
 
   purchase_orders Purchase_Orders @relation(fields: [PurchaseOrderId], references: [Id])
-  products Products @relation(fields: [ProductId], references: [Id])
 
   @@map("purchase_order_details")
 }
@@ -297,7 +298,6 @@ model Purchase_Return_Details {
   Total Float @default(0)
 
   purchase_orders Purchase_Orders @relation(fields: [PurchaseOrderId], references: [Id])
-  products Products @relation(fields: [ProductId], references: [Id])
 
   @@map("purchase_return_details")
 }
@@ -330,7 +330,6 @@ model StockTransfers_Details {
   UpdateAt DateTime @updatedAt
 
   StockTransfers StockTransfers @relation(fields: [TransProductId], references: [Id])
-  products Products @relation(fields: [ProductId], references: [Id])
 
   @@map("stockTransfers_details")
 }
