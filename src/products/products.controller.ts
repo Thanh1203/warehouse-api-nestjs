@@ -75,7 +75,7 @@ export class ProductsController {
 
   @Delete()
   async deleteProducts(
-    @GetUserInfor('companyId') companyId,
+    @GetUserInfor('companyId') companyId: number,
     @Body('productIds', ParseIntArrayPipe) productIds: number[]
   ): Promise<{ message: string; }> {
     return await this.productsService.deleteProducts(productIds, companyId);
