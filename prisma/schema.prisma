@@ -7,6 +7,8 @@
 // run migrations để tạo lại các bảng 
 // npx prisma migrate dev --name <migration-name>
 
+// run docker docker-compose up -d
+
 generator client {
   provider = "prisma-client-js"
 }
@@ -58,6 +60,7 @@ model Warehouses {
   transProductFrom StockTransfers[] @relation("FromWarehouse")
   transProductTo StockTransfers[] @relation("ToWarehouse")
   customers Customers[]
+  invoices Invoices[]
 
   userCompany Users @relation("userCompany", fields: [CompanyId], references: [CompanyId])
   usersStaff Users @relation("usersStaff", fields: [StaffId], references: [Id])
@@ -222,8 +225,10 @@ model Invoices {
   StaffId Int
   CreateAt DateTime @default(now())
   Total Float @default(0)
+  WarehouseId Int
 
   customers Customers @relation(fields: [CustomerId], references: [Id])
+  warehouse Warehouses @relation(fields: [WarehouseId], references: [Id])
 
   invoice_details Invoice_Details[]
 

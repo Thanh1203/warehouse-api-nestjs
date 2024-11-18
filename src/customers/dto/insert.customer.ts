@@ -21,10 +21,5 @@ export class InsertCustomer{
   @Transform(({ value }) => parseInt(value, 10))
   @IsNotEmpty()
   @IsNumber()
-  companyId: number;
-
-  @Transform(({ value }) => parseInt(value, 10))
-  @IsNotEmpty()
-  @IsNumber()
   warehouseId: number; 
 }
