@@ -9,6 +9,8 @@
 
 // run docker docker-compose up -d
 
+// tạo mới folder với lệnh: nest generate resource <resource-name> 
+// tạo mới folder không có file test: nest generate resource <resource-name> --no-spec
 generator client {
   provider = "prisma-client-js"
 }
@@ -40,7 +42,12 @@ model Users {
   inventory_items Inventory_Items[]
   StockTransfers StockTransfers[]
   customers Customers[]
+  discountOffers DiscountOffers[]
+  invoicesCompany Invoices[] @relation("userCompany")
+  invoicesStaff Invoices[] @relation("invoicesStaff")
 
+  purchase_orders Purchase_Orders[]
+  
   @@map("users")
 }
 
@@ -211,6 +218,7 @@ model Customers {
   WarehouseId Int
 
   invoices Invoices[]
+  discountOffers DiscountOffers[]
 
   companyId Users @relation(fields: [CompanyId], references: [CompanyId])
   warehouse Warehouses @relation(fields: [WarehouseId], references: [Id])
@@ -226,9 +234,13 @@ model Invoices {
   CreateAt DateTime @default(now())
   Total Float @default(0)
   WarehouseId Int
+  Discount Float @default(0)
+  CompanyId Int
 
   customers Customers @relation(fields: [CustomerId], references: [Id])
   warehouse Warehouses @relation(fields: [WarehouseId], references: [Id])
+  companyId Users @relation("userCompany", fields: [CompanyId], references: [CompanyId])
+  staff Users @relation("invoicesStaff", fields: [StaffId], references: [Id])
 
   invoice_details Invoice_Details[]
 
@@ -268,8 +280,11 @@ model Purchase_Orders {
   CreateAt DateTime @default(now())
   UpdateAt DateTime @updatedAt
   Status PurchaseOrderStatus @default(PENDING)
+  CompanyId Int
+  WarehouseIds Int[]
 
   suppliers Suppliers @relation(fields: [SupplierId], references: [Id])
+  companyId Users @relation(fields: [CompanyId], references: [CompanyId])
 
   purchase_order_details Purchase_Order_Details[]
   purchase_return_details Purchase_Return_Details[]
@@ -337,4 +352,23 @@ model StockTransfers_Details {
   StockTransfers StockTransfers @relation(fields: [TransProductId], references: [Id])
 
   @@map("stockTransfers_details")
+}
+
+model DiscountOffers {
+  Id Int @id @default(autoincrement())
+  Code String @unique
+  Name String
+  Description String
+  Discount Float @default(0)
+  StartDate DateTime
+  EndDate DateTime
+  CreateAt DateTime @default(now())
+  UpdateAt DateTime @updatedAt
+  CustomerId Int
+  CompanyId Int
+
+  customers Customers @relation(fields: [CustomerId], references: [Id])
+  companyId Users @relation(fields: [CompanyId], references: [CompanyId])
+
+  @@map("discountOffers")
 }

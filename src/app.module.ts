@@ -7,8 +7,9 @@ import { ProductsModule } from './products/products.module';
 import { WarehousesModule } from './warehouses/warehouses.module';
 import { SuppliersModule } from './suppliers/suppliers.module';
 import { CustomersModule } from './customers/customers.module';
+import { InvoicesModule } from './invoices/invoices.module';
 @Module({
-  imports: [AuthModule, PrismaModule, CategoriesModule, ClassifiesModule, ProductsModule, WarehousesModule, SuppliersModule, CustomersModule],
+  imports: [AuthModule, PrismaModule, CategoriesModule, ClassifiesModule, ProductsModule, WarehousesModule, SuppliersModule, CustomersModule, InvoicesModule],
   controllers: [],
   providers: [],
 })
