@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { InsertInvoice } from './dto';
+import { InsertInvoice, InvoiceDetailDto, InvoiceProductsDto } from './dto';
 
 @Injectable()
 export class InvoicesService {
@@ -138,5 +138,71 @@ export class InvoicesService {
     return { message: 'Delete invoices successfully' };
   }
 
-  
+  async getDetailInvoice(companyId: number, id: number) { 
+    const listProduct = await this.prismaService.invoice_Details.findMany({
+      where: {
+        InvoiceId: id,
+      },
+      include: {
+        product: {
+          select: {
+            Name: true,
+            Code: true,
+          }
+        }
+      }
+    });
+
+    const invoiceProducts: InvoiceProductsDto[] = listProduct.map(data => {
+      return {
+        Code: data.product.Code,
+        Name: data.product.Name,
+        Quantity: data.Quantity,
+        Price: data.Price,
+        Total: data.Total,
+      }
+    });
+
+    const invoiceDetail = await this.prismaService.invoices.findUnique({
+      where: {
+        Id: id,
+        CompanyId: companyId,
+      },
+      include: {
+        customers: {
+          select: {
+            Name: true,
+            Phone: true,
+          }
+        },
+        staff: {
+          select: {
+            Name: true,
+          }
+        },
+        warehouse: {
+          select: {
+            Name: true,
+            Address: true,
+          }
+        }
+      }
+    })
+
+    const result: InvoiceDetailDto = {
+      Id: invoiceDetail.Id,
+      Code: invoiceDetail.Code,
+      CustomerName: invoiceDetail.customers.Name,
+      CustomerPhone: invoiceDetail.customers.Phone,
+      StaffId: invoiceDetail.StaffId,
+      StaffName: invoiceDetail.staff.Name,
+      WarehouseName: invoiceDetail.warehouse.Name,
+      Address: invoiceDetail.warehouse.Address,
+      Discount: invoiceDetail.Discount,
+      Total: invoiceDetail.Total,
+      products: invoiceProducts,
+    }
+
+    return result;
+  }  
 }

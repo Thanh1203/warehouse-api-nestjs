@@ -161,7 +161,8 @@ model Products {
 
   price_configuration Price_Configuration[]
   inventory_items Inventory_Items[]
-  
+  invoice_details Invoice_Details[]
+
   @@map("products")
 }
 
@@ -255,10 +256,10 @@ model Invoice_Details {
   Price Float
   Total Float
   CreateAt DateTime @default(now())
-  UpdateAt DateTime @updatedAt
 
   invoices Invoices @relation(fields: [InvoiceId], references: [Id])
-  
+  product Products @relation(fields: [ProductId], references: [Id])
+
   @@map("invoice_details")
 }
 
