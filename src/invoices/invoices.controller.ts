@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Patch, Post, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
 import { InvoicesService } from './invoices.service';
 import { AtGuard } from '../auth/common/guards';
 import { GetUserInfor } from '../auth/common/decorators';
@@ -15,6 +15,14 @@ export class InvoicesController {
     @GetUserInfor('companyId') companyId: number,
   ) { 
     return await this.invoicesService.getInvoices(companyId);
+  }
+
+  @Get(':id')
+  async getDetailInvoice(
+    @GetUserInfor('companyId') companyId: number,
+    @Param('id') id: number
+  ) {
+    return await this.invoicesService.getDetailInvoice(companyId, id);
   }
 
   @Get('search')

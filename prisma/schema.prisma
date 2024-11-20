@@ -297,7 +297,7 @@ model Purchase_Order_Details {
   Id Int @id @default(autoincrement())
   PurchaseOrderId Int
   ProductId Int
-  Quantity Int
+  Quantity Int @default(0)
   CreateAt DateTime @default(now())
   UpdateAt DateTime @updatedAt
   Price Float @default(0)
