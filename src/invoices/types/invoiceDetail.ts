@@ -1,12 +1,6 @@
-export class InvoiceProductsDto {
-  Code: string;
-  Name: string;
-  Quantity: number;
-  Price: number;
-  Total: number;
-}
+import { ProductsInvoice } from "./productsInvoice";
 
-export class InvoiceDetailDto {
+export type InvoiceDetail = {
   Id: number;
   Code: string;
   CustomerPhone: string;
@@ -17,5 +11,5 @@ export class InvoiceDetailDto {
   Address: string;
   Discount: number;
   Total: number;
-  products: InvoiceProductsDto[];
+  products: ProductsInvoice[];
 }

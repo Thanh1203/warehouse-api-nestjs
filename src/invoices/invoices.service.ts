@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { InsertInvoice, InvoiceDetailDto, InvoiceProductsDto } from './dto';
+import { InsertInvoice, } from './dto';
+import { ProductsInvoice, InvoiceDetail } from './types';
 
 @Injectable()
 export class InvoicesService {
@@ -153,7 +154,7 @@ export class InvoicesService {
       }
     });
 
-    const invoiceProducts: InvoiceProductsDto[] = listProduct.map(data => {
+    const invoiceProducts: ProductsInvoice[] = listProduct.map(data => {
       return {
         Code: data.product.Code,
         Name: data.product.Name,
@@ -189,7 +190,7 @@ export class InvoicesService {
       }
     })
 
-    const result: InvoiceDetailDto = {
+    const result: InvoiceDetail = {
       Id: invoiceDetail.Id,
       Code: invoiceDetail.Code,
       CustomerName: invoiceDetail.customers.Name,

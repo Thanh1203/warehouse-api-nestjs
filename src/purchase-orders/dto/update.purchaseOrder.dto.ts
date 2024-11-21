@@ -1,7 +1,8 @@
-import { Transform, Type } from "class-transformer";
-import { ArrayNotEmpty, IsNotEmpty, IsNumber, IsOptional, IsString, ValidateNested } from "class-validator";
+import { PurchaseOrderStatus } from "@prisma/client";
+import { Transform } from "class-transformer";
+import { IsNotEmpty, IsNumber, IsOptional, IsString, ValidateNested } from "class-validator";
 
-class UpdatePurchaseOrderDetail {
+export class UpdatePurchaseOrderDetail {
   @Transform(({ value }) => parseInt(value, 10))
   @IsNumber()
   @IsOptional()
@@ -23,18 +24,7 @@ class UpdatePurchaseOrderDetail {
   total?: number;
 }
 
-class OrderWarehoseId {
-  @Transform(({ value }) => parseInt(value, 10))
-  @IsNumber()
-  @IsNotEmpty()
-  warehouseId: number;
-}
-
 export class UpdatePurchaseOrder {
-  @IsNotEmpty()
-  @IsString()
-  code: string;
-
   @Transform(({ value }) => parseInt(value, 10))
   @IsNumber()
   @IsNotEmpty()
@@ -42,22 +32,19 @@ export class UpdatePurchaseOrder {
 
   @Transform(({ value }) => parseInt(value, 10))
   @IsNumber()
-  @IsNotEmpty()
-  staffId: number;
+  @IsOptional()
+  staffId?: number;
 
-  @ArrayNotEmpty()
-  @ValidateNested({ each: true })
-  @Type(() => OrderWarehoseId)
-  WarehouseIds: OrderWarehoseId[];
+  WarehouseIds: number[];
 
   @IsNotEmpty()
   @IsString()
-  status: string;
+  status: PurchaseOrderStatus;
 
   @Transform(({ value }) => parseInt(value, 10))
   @IsOptional()
   @IsNumber()
   total?: number;
 
-  details: UpdatePurchaseOrderDetail[];
+  // detail: UpdatePurchaseOrderDetail[];
 }

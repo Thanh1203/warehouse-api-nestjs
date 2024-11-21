@@ -1,3 +1,4 @@
+import { PurchaseOrderStatus } from "@prisma/client";
 import { Transform, Type } from "class-transformer";
 import { ArrayNotEmpty, IsNotEmpty, IsNumber, IsOptional, IsString, ValidateNested } from "class-validator";
 
@@ -23,13 +24,6 @@ class InsertPurchaseOrderDetail {
   total?: number;
 }
 
-class OrderWarehoseId {
-  @Transform(({ value }) => parseInt(value, 10))
-  @IsNumber()
-  @IsNotEmpty()
-  warehouseId: number;
-}
-
 export class InsertPurchaseOrder {
   @IsNotEmpty()
   @IsString()
@@ -45,19 +39,16 @@ export class InsertPurchaseOrder {
   @IsNotEmpty()
   staffId: number;
 
-  @ArrayNotEmpty()
-  @ValidateNested({ each: true })
-  @Type(() => OrderWarehoseId)
-  WarehouseIds: OrderWarehoseId[];
+  WarehouseIds: number[];
 
   @IsNotEmpty()
   @IsString()
-  status: string;
+  status: PurchaseOrderStatus;
 
   @Transform(({ value }) => parseInt(value, 10))
   @IsOptional()
   @IsNumber()
   total?: number;
 
-  details: InsertPurchaseOrderDetail[];
+  detail: InsertPurchaseOrderDetail[];
 }

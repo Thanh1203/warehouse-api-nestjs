@@ -45,8 +45,8 @@ model Users {
   discountOffers DiscountOffers[]
   invoicesCompany Invoices[] @relation("userCompany")
   invoicesStaff Invoices[] @relation("invoicesStaff")
-
-  purchase_orders Purchase_Orders[]
+  purchase_orders Purchase_Orders[] @relation("userCompany")
+  orderStaff Purchase_Orders[] @relation("orderStaff")
   
   @@map("users")
 }
@@ -162,6 +162,7 @@ model Products {
   price_configuration Price_Configuration[]
   inventory_items Inventory_Items[]
   invoice_details Invoice_Details[]
+  purchase_order_details Purchase_Order_Details[]
 
   @@map("products")
 }
@@ -285,7 +286,8 @@ model Purchase_Orders {
   WarehouseIds Int[]
 
   suppliers Suppliers @relation(fields: [SupplierId], references: [Id])
-  companyId Users @relation(fields: [CompanyId], references: [CompanyId])
+  companyId Users @relation("userCompany", fields: [CompanyId], references: [CompanyId])
+  staff Users @relation( "orderStaff", fields: [StaffId], references: [Id])
 
   purchase_order_details Purchase_Order_Details[]
   purchase_return_details Purchase_Return_Details[]
@@ -294,18 +296,18 @@ model Purchase_Orders {
 }
 
 model Purchase_Order_Details {
-  Id Int @id @default(autoincrement())
   PurchaseOrderId Int
   ProductId Int
   Quantity Int @default(0)
-  CreateAt DateTime @default(now())
-  UpdateAt DateTime @updatedAt
   Price Float @default(0)
   Total Float @default(0)
 
   purchase_orders Purchase_Orders @relation(fields: [PurchaseOrderId], references: [Id])
+  product Products @relation(fields: [ProductId], references: [Id])
 
+  @@id([PurchaseOrderId, ProductId])
   @@map("purchase_order_details")
+  
 }
 
 model Purchase_Return_Details {
