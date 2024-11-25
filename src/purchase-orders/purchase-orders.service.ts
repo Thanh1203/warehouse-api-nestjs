@@ -1,8 +1,8 @@
 import { ForbiddenException, Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { ProductsPurchaseOrder, PurchaseOrderDetail, WarehousePurchaseOrder } from './types';
-import { PurchaseOrderStatus } from '@prisma/client';
-import { InsertPurchaseOrder, UpdatePurchaseOrder, UpdatePurchaseOrderDetail } from './dto';
+import { ProductOrderStatus, PurchaseOrderStatus } from '@prisma/client';
+import { InsertPurchaseOrder, InsertPurchaseReturnDetail, UpdatePurchaseOrder, UpdatePurchaseOrderDetail } from './dto';
 
 @Injectable()
 export class PurchaseOrdersService {
@@ -38,26 +38,6 @@ export class PurchaseOrdersService {
   }
 
   async getDetailPurchaseOrder(companyId: number, id: number) {
-    const productsOrder: ProductsPurchaseOrder[] = await this.prismaService.purchase_Order_Details.findMany({
-      where: {
-        PurchaseOrderId: id,
-      },
-      include: {
-        product: {
-          select: {
-            Name: true,
-            Code: true,
-          }
-        }
-      }
-    }).then(data => data.map(product => ({ 
-      productId: product?.ProductId,
-      name: product?.product.Name,
-      quantity: product?.Quantity ?? 0,
-      price: product?.Price ?? 0,
-      total: product?.Total ?? 0,
-    })));
-
     const purchaseOrderDetail = await this.prismaService.purchase_Orders.findUnique({
       where: {
         CompanyId: companyId,
@@ -76,6 +56,27 @@ export class PurchaseOrdersService {
         }
       }
     });
+    
+    const productsOrder: ProductsPurchaseOrder[] = await this.prismaService.purchase_Order_Details.findMany({
+      where: {
+        PurchaseOrderId: id,
+        Status: purchaseOrderDetail.Status === PurchaseOrderStatus.RECEIVED_PART ? ProductOrderStatus.REFUND : purchaseOrderDetail.Status,
+      },
+      include: {
+        product: {
+          select: {
+            Name: true,
+            Code: true,
+          }
+        }
+      }
+    }).then(data => data.map(product => ({ 
+      productId: product?.ProductId,
+      name: product?.product.Name,
+      quantity: product?.Quantity ?? 0,
+      price: product?.Price ?? 0,
+      total: product?.Total ?? 0,
+    })));
 
     const warehouses: WarehousePurchaseOrder[] = await this.prismaService.warehouses.findMany({
       where: {
@@ -258,6 +259,34 @@ export class PurchaseOrdersService {
     } catch (error) {
       console.log(error);
       throw new ForbiddenException('Failed to delete pruchase order');
+    }
+  }
+
+  async createPurchaseReturn(companyId: number, id: number, dto: InsertPurchaseReturnDetail) {
+    try {
+      await this.prismaService.purchase_Orders.update({
+        where: {
+          CompanyId: companyId,
+          Id: id,
+        },
+        data: {
+          Status: PurchaseOrderStatus.RECEIVED_PART,
+        }
+      });
+
+      return await this.prismaService.purchase_Return_Details.create({
+        data: {
+          PurchaseOrderId: id,
+          ProductId: dto.productId,
+          Quantity: dto.quantity,
+          Price: dto.price,
+          Total: dto.total,
+        }
+      });
+
+    } catch (error) {
+      console.log(error);
+      throw new ForbiddenException('Failed to retrun product');
     }
   }
 }

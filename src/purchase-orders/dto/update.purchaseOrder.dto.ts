@@ -45,6 +45,4 @@ export class UpdatePurchaseOrder {
   @IsOptional()
   @IsNumber()
   total?: number;
-
-  // detail: UpdatePurchaseOrderDetail[];
 }

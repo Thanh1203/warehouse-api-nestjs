@@ -267,10 +267,21 @@ model Invoice_Details {
 enum PurchaseOrderStatus {
   PENDING // đang nháp
   RECEIVED // đã nhận
-  CANCELLED // đã hủy
-  SENT // đã gửi đơn đặt hàng
   RECEIVING // đang nhận hàng
+  SENT // đã gửi đơn đặt hàng
+  SENDING // đang gửi hàng
   RECEIVED_PART // đã nhận một phần hàng
+  CANCELLED // đã hủy
+}
+
+enum ProductOrderStatus {
+  PENDING // đang nháp
+  RECEIVED// đã nhận
+  RECEIVING // đang nhận hàng
+  SENT // đã gửi đơn đặt hàng
+  SENDING // đang gửi hàng
+  REFUND // Hoàn trả
+  CANCELLED // đã hủy
 }
 
 model Purchase_Orders {
@@ -301,7 +312,7 @@ model Purchase_Order_Details {
   Quantity Int @default(0)
   Price Float @default(0)
   Total Float @default(0)
-
+  Status ProductOrderStatus @default(PENDING)
   purchase_orders Purchase_Orders @relation(fields: [PurchaseOrderId], references: [Id])
   product Products @relation(fields: [ProductId], references: [Id])
 
@@ -319,6 +330,7 @@ model Purchase_Return_Details {
   UpdateAt DateTime @updatedAt
   Price Float @default(0)
   Total Float @default(0)
+  Status ProductOrderStatus @default(REFUND)
 
   purchase_orders Purchase_Orders @relation(fields: [PurchaseOrderId], references: [Id])
 
