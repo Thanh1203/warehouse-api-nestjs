@@ -45,8 +45,8 @@ model Users {
   discountOffers DiscountOffers[]
   invoicesCompany Invoices[] @relation("userCompany")
   invoicesStaff Invoices[] @relation("invoicesStaff")
-
-  purchase_orders Purchase_Orders[]
+  purchase_orders Purchase_Orders[] @relation("userCompany")
+  orderStaff Purchase_Orders[] @relation("orderStaff")
   
   @@map("users")
 }
@@ -162,6 +162,7 @@ model Products {
   price_configuration Price_Configuration[]
   inventory_items Inventory_Items[]
   invoice_details Invoice_Details[]
+  purchase_order_details Purchase_Order_Details[]
 
   @@map("products")
 }
@@ -266,10 +267,21 @@ model Invoice_Details {
 enum PurchaseOrderStatus {
   PENDING // đang nháp
   RECEIVED // đã nhận
-  CANCELLED // đã hủy
-  SENT // đã gửi đơn đặt hàng
   RECEIVING // đang nhận hàng
+  SENT // đã gửi đơn đặt hàng
+  SENDING // đang gửi hàng
   RECEIVED_PART // đã nhận một phần hàng
+  CANCELLED // đã hủy
+}
+
+enum ProductOrderStatus {
+  PENDING // đang nháp
+  RECEIVED// đã nhận
+  RECEIVING // đang nhận hàng
+  SENT // đã gửi đơn đặt hàng
+  SENDING // đang gửi hàng
+  REFUND // Hoàn trả
+  CANCELLED // đã hủy
 }
 
 model Purchase_Orders {
@@ -285,7 +297,8 @@ model Purchase_Orders {
   WarehouseIds Int[]
 
   suppliers Suppliers @relation(fields: [SupplierId], references: [Id])
-  companyId Users @relation(fields: [CompanyId], references: [CompanyId])
+  companyId Users @relation("userCompany", fields: [CompanyId], references: [CompanyId])
+  staff Users @relation( "orderStaff", fields: [StaffId], references: [Id])
 
   purchase_order_details Purchase_Order_Details[]
   purchase_return_details Purchase_Return_Details[]
@@ -294,18 +307,18 @@ model Purchase_Orders {
 }
 
 model Purchase_Order_Details {
-  Id Int @id @default(autoincrement())
   PurchaseOrderId Int
   ProductId Int
-  Quantity Int
-  CreateAt DateTime @default(now())
-  UpdateAt DateTime @updatedAt
+  Quantity Int @default(0)
   Price Float @default(0)
   Total Float @default(0)
-
+  Status ProductOrderStatus @default(PENDING)
   purchase_orders Purchase_Orders @relation(fields: [PurchaseOrderId], references: [Id])
+  product Products @relation(fields: [ProductId], references: [Id])
 
+  @@id([PurchaseOrderId, ProductId])
   @@map("purchase_order_details")
+  
 }
 
 model Purchase_Return_Details {
@@ -317,6 +330,7 @@ model Purchase_Return_Details {
   UpdateAt DateTime @updatedAt
   Price Float @default(0)
   Total Float @default(0)
+  Status ProductOrderStatus @default(REFUND)
 
   purchase_orders Purchase_Orders @relation(fields: [PurchaseOrderId], references: [Id])
 

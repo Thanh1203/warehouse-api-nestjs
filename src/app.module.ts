@@ -8,8 +8,9 @@ import { WarehousesModule } from './warehouses/warehouses.module';
 import { SuppliersModule } from './suppliers/suppliers.module';
 import { CustomersModule } from './customers/customers.module';
 import { InvoicesModule } from './invoices/invoices.module';
+import { PurchaseOrdersModule } from './purchase-orders/purchase-orders.module';
 @Module({
-  imports: [AuthModule, PrismaModule, CategoriesModule, ClassifiesModule, ProductsModule, WarehousesModule, SuppliersModule, CustomersModule, InvoicesModule],
+  imports: [AuthModule, PrismaModule, CategoriesModule, ClassifiesModule, ProductsModule, WarehousesModule, SuppliersModule, CustomersModule, InvoicesModule, PurchaseOrdersModule],
   controllers: [],
   providers: [],
 })
