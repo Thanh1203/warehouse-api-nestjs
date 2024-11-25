@@ -3,7 +3,7 @@ import { PurchaseOrdersService } from './purchase-orders.service';
 import { AtGuard } from '../auth/common/guards';
 import { GetUserInfor } from '../auth/common/decorators';
 import { ParseIntArrayPipe } from '@/pipes';
-import { InsertPurchaseOrder, UpdatePurchaseOrder, UpdatePurchaseOrderDetail } from './dto';
+import { InsertPurchaseOrder, InsertPurchaseReturnDetail, UpdatePurchaseOrder, UpdatePurchaseOrderDetail } from './dto';
 import { PurchaseOrderStatus } from '@prisma/client';
 
 @UseGuards(AtGuard)
@@ -46,7 +46,16 @@ export class PurchaseOrdersController {
   ) { 
     return await this.purchaseOrdersService.createPurchaseOrder(companyId, dto);
   }
-  
+
+  @Post('refund/:id')
+  async createPurchaseReturn(
+    @GetUserInfor('companyId') companyId: number,
+    @Param('id') id: number,
+    @Body() dto: InsertPurchaseReturnDetail,
+  ) {
+    return await this.purchaseOrdersService.createPurchaseReturn(companyId, id, dto);
+  }
+    
   @Patch(':id')
   async updatePurchaseOrder(
     @GetUserInfor('companyId') companyId: number,
