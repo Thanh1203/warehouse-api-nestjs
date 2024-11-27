@@ -40,7 +40,8 @@ model Users {
   classifies Classifies[]
   price_configuration Price_Configuration[]
   inventory_items Inventory_Items[]
-  StockTransfers StockTransfers[]
+  StockTransfersCompany StockTransfers[] @relation("userCompanyTransfers")
+  StockTransfersStaff StockTransfers[] @relation("userStaffTransfers")
   customers Customers[]
   discountOffers DiscountOffers[]
   invoicesCompany Invoices[] @relation("userCompany")
@@ -163,6 +164,8 @@ model Products {
   inventory_items Inventory_Items[]
   invoice_details Invoice_Details[]
   purchase_order_details Purchase_Order_Details[]
+  purchase_return_details Purchase_Return_Details[]
+  stockTransfers_details StockTransfers_Details[]
 
   @@map("products")
 }
@@ -313,6 +316,7 @@ model Purchase_Order_Details {
   Price Float @default(0)
   Total Float @default(0)
   Status ProductOrderStatus @default(PENDING)
+
   purchase_orders Purchase_Orders @relation(fields: [PurchaseOrderId], references: [Id])
   product Products @relation(fields: [ProductId], references: [Id])
 
@@ -322,50 +326,61 @@ model Purchase_Order_Details {
 }
 
 model Purchase_Return_Details {
-  Id Int @id @default(autoincrement())
   PurchaseOrderId Int
   ProductId Int
   Quantity Int
-  CreateAt DateTime @default(now())
-  UpdateAt DateTime @updatedAt
   Price Float @default(0)
   Total Float @default(0)
   Status ProductOrderStatus @default(REFUND)
 
   purchase_orders Purchase_Orders @relation(fields: [PurchaseOrderId], references: [Id])
+  product Products @relation(fields: [ProductId], references: [Id])
 
+  @@id([PurchaseOrderId, ProductId])
   @@map("purchase_return_details")
+}
+
+enum StockTransferStatus {
+  PENDING // đang nháp
+  RECEIVED // đã nhận
+  RECEIVING // đang nhận hàng
+  SENT // đã gửi hàng
+  SENDING // đang gửi hàng
+  CANCELLED // đã hủy
 }
 
 model StockTransfers {
   Id Int @id @default(autoincrement())
-  StaffId Int
   Code String @unique
-  Quantity Int
+  StaffId Int
+  Quantity Int @default(0)
   FromWarehouseId Int
   ToWarehouseId Int
   CreateAt DateTime @default(now())
   UpdateAt DateTime @updatedAt
+  Status StockTransferStatus @default(PENDING)
+  CompanyId Int
 
-  staff Users @relation(fields: [StaffId], references: [Id])
+  staff Users @relation("userStaffTransfers", fields: [StaffId], references: [Id])
   fromWarehouse  Warehouses @relation("FromWarehouse", fields: [FromWarehouseId], references: [Id])
   toWarehouse    Warehouses @relation("ToWarehouse", fields: [ToWarehouseId], references: [Id])
-
+  company Users @relation("userCompanyTransfers", fields: [CompanyId], references: [CompanyId])
+  
   StockTransfers_details StockTransfers_Details[]
 
   @@map("stockTransfers")
 }
 
 model StockTransfers_Details {
-  Id Int @id @default(autoincrement())
   TransProductId Int
   ProductId Int
-  Quantity Int
-  CreateAt DateTime @default(now())
-  UpdateAt DateTime @updatedAt
+  Quantity Int @default(0)
+  Status StockTransferStatus @default(PENDING)
 
   StockTransfers StockTransfers @relation(fields: [TransProductId], references: [Id])
+  product Products @relation(fields: [ProductId], references: [Id])
 
+  @@id([TransProductId, ProductId])
   @@map("stockTransfers_details")
 }
 

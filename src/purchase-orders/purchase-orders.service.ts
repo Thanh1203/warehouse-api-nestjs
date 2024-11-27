@@ -190,6 +190,7 @@ export class PurchaseOrdersService {
           set: dto.WarehouseIds,
         },
         Status: dto.status,
+        Total: dto.total,
       }
     });
   }
