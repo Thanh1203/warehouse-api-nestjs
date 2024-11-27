@@ -33,6 +33,23 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
       }
       return next(params);
     });
+
+    // middleware to update the updatedAt field in stock_transfer table when stock_transfer_detail is updated
+    this.$use(async (params, next) => {
+      if (params.model === 'StockTransfers_Details' && params.action === 'update' || params.action === 'updateMany' || params.action === 'delete') {
+        const result = await next(params);
+        // get the id from the params
+        const id = params.args.where.StockTransferId;
+        // update the updatedAt field in the stock_transfer table
+        await this.stockTransfers.update({
+          where: { Id: id },
+          data: { UpdateAt: new Date() }
+        });
+
+        return result;
+        
+      }
+    })
   }
 
   async onModuleDestroy() {

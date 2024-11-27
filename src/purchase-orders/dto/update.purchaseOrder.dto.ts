@@ -5,7 +5,7 @@ import { IsNotEmpty, IsNumber, IsOptional, IsString, ValidateNested } from "clas
 export class UpdatePurchaseOrderDetail {
   @Transform(({ value }) => parseInt(value, 10))
   @IsNumber()
-  @IsOptional()
+  @IsNotEmpty()
   productId: number;
 
   @Transform(({ value }) => parseInt(value, 10))
@@ -22,6 +22,10 @@ export class UpdatePurchaseOrderDetail {
   @IsNumber()
   @IsOptional()
   total?: number;
+
+  @IsString()
+  @IsOptional()
+  status?: PurchaseOrderStatus;
 }
 
 export class UpdatePurchaseOrder {
