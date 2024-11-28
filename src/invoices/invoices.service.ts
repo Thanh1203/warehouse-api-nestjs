@@ -116,7 +116,7 @@ export class InvoicesService {
     return newInvoice;
   }
 
-  async deleteInvoices(companyId: number, warehouseId, ids) {
+  async deleteInvoices(companyId: number, warehouseId: number, ids:number[]) {
     await this.prismaService.$transaction([
       this.prismaService.invoice_Details.deleteMany({
         where: {

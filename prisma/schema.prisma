@@ -221,10 +221,12 @@ model Customers {
   purchase_count Int @default(0)
   CompanyId Int
   WarehouseId Int
+  DiscountIds Int[] @default([])
 
   invoices Invoices[]
-  discountOffers DiscountOffers[]
+  customerDiscounts CustomerDiscounts[]
 
+  discounts DiscountOffers[] @relation("CustomerDiscounts")
   companyId Users @relation(fields: [CompanyId], references: [CompanyId])
   warehouse Warehouses @relation(fields: [WarehouseId], references: [Id])
 
@@ -384,6 +386,12 @@ model StockTransfers_Details {
   @@map("stockTransfers_details")
 }
 
+enum DiscountType {
+  ITEMPRICE
+  SHIPPING
+  ITEM_SHIPPING
+}
+
 model DiscountOffers {
   Id Int @id @default(autoincrement())
   Code String @unique
@@ -394,11 +402,22 @@ model DiscountOffers {
   EndDate DateTime
   CreateAt DateTime @default(now())
   UpdateAt DateTime @updatedAt
-  CustomerId Int
   CompanyId Int
+  Type DiscountType
 
-  customers Customers @relation(fields: [CustomerId], references: [Id])
+  discountCustomers CustomerDiscounts[]
+  customers Customers[] @relation("CustomerDiscounts")
   companyId Users @relation(fields: [CompanyId], references: [CompanyId])
 
   @@map("discountOffers")
+}
+model CustomerDiscounts {
+  CustomerId Int
+  DiscountId Int
+
+  customers Customers @relation(fields: [CustomerId], references: [Id])
+  discount DiscountOffers @relation(fields: [DiscountId], references: [Id])
+
+  @@id([CustomerId, DiscountId])
+  @@map("customer_discounts")
 }
