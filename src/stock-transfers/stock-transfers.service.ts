@@ -42,7 +42,7 @@ export class StockTransfersService {
     });
   }
   
-  async searchStockTransfers(companyId: number, query: Record<string, TransfersQuery>) {
+  async searchStockTransfers(companyId: number, query: Record<string, any>) {
     const { idFrom, idTo, createAt, status, code } = query as TransfersQuery;
     const result = await this.prismaService.stockTransfers.findMany({
       where: {

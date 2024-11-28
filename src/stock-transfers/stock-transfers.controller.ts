@@ -15,7 +15,7 @@ export class StockTransfersController {
   @Get()
   async getAllStockTransfers(
     @GetUserInfor('companyId') companyId: number,
-    @Query() query?: Record<string, TransfersQuery>
+    @Query() query?: Record<string, any>
   ) {
     if (Object.keys(query).length === 0) {
       return await this.stockTransfersService.getAllStockTransfers(companyId);

@@ -10,8 +10,9 @@ import { CustomersModule } from './customers/customers.module';
 import { InvoicesModule } from './invoices/invoices.module';
 import { PurchaseOrdersModule } from './purchase-orders/purchase-orders.module';
 import { StockTransfersModule } from './stock-transfers/stock-transfers.module';
+import { DiscountModule } from './discount/discount.module';
 @Module({
-  imports: [AuthModule, PrismaModule, CategoriesModule, ClassifiesModule, ProductsModule, WarehousesModule, SuppliersModule, CustomersModule, InvoicesModule, PurchaseOrdersModule, StockTransfersModule],
+  imports: [AuthModule, PrismaModule, CategoriesModule, ClassifiesModule, ProductsModule, WarehousesModule, SuppliersModule, CustomersModule, InvoicesModule, PurchaseOrdersModule, StockTransfersModule, DiscountModule],
   controllers: [],
   providers: [],
 })
