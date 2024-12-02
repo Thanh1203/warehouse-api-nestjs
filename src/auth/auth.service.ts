@@ -10,11 +10,9 @@ import { FieldsToDelete } from 'src/constants';
 export class AuthService {
   constructor(private prismaService: PrismaService, private jwtService: JwtService) {}
   
-
   async signUpUser(dto: signUpDto): Promise<Tokens> {
     const hashedPassword = await this.hashData(dto.password);
     const newCompanyId = await this.generateCompanyId();
-
     try {
       const newUser = await this.prismaService.users.create({
         data: {
@@ -34,25 +32,20 @@ export class AuthService {
           Address: true,
         }
       })
-  
       const tokens = await this.getTokens(newUser.Id, newUser.Email, newUser.Position, newUser.CompanyId)
       await this.updateRtHash(newUser.Id, tokens.refresh_token);
-      
       FieldsToDelete.forEach(field => {
         delete newUser[field];
       })
-
       return {
         ...newUser,
         ...tokens
       };
-
     } catch (error) {
       if (error.code === 'P2002') {
         throw new ForbiddenException('Email already exists')
       }
     }
-
   }
   
   async signinUser(dto: signInDto): Promise<Tokens> { 

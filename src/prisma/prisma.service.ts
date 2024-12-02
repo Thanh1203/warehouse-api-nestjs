@@ -19,6 +19,7 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
 
     // middleware to update the updatedAt field in purchase_order table when pruchase_order_detail is updated
     this.$use(async (params, next) => {
+      console.log(params);
       if (params.model === 'Purchase_Order_Details' && params.action === 'update' || params.action === 'updateMany' || params.action === 'delete') {
         const result = await next(params);
         // get the id from the params
@@ -36,6 +37,7 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
 
     // middleware to update the updatedAt field in stock_transfer table when stock_transfer_detail is updated
     this.$use(async (params, next) => {
+      console.log(params);
       if (params.model === 'StockTransfers_Details' && params.action === 'update' || params.action === 'updateMany' || params.action === 'delete') {
         const result = await next(params);
         // get the id from the params
@@ -47,8 +49,8 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
         });
 
         return result;
-        
       }
+      return next(params);
     })
   }
 
