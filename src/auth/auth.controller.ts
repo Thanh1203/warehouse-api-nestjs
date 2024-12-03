@@ -28,7 +28,7 @@ export class AuthController {
   @Post('logout') // thoat
   @HttpCode(HttpStatus.OK)
   logoutUser(@GetUserInfor('id') userId: number) {
-    return this.authService.logoutUser(userId);
+    // return this.authService.logoutUser(userId);
   }
 
   @UseGuards(RtGuard)
@@ -38,6 +38,6 @@ export class AuthController {
     @GetUserInfor('id') userId: number,
     @GetUserInfor('refreshToken') rtToken: string
   ) {
-    return this.authService.refreshToken(userId, rtToken);
+    // return this.authService.refreshToken(userId, rtToken);
   }
 }

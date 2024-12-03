@@ -6,52 +6,84 @@ import { InsertWarehouse, UpdateWarehouse } from './dto';
 export class WarehousesService {
   constructor(private prismaService: PrismaService) { }
   
-  async gethWarehouses(companyId: number) {
-    const result = await this.prismaService.warehouses.findMany({
+  async getAllWarehouse(companyId: number, page: number = 1, limit: number = 10) {
+    const skip = (page - 1) * limit;
+    const [warehouses, totalCount] = await this.prismaService.$transaction([
+      this.prismaService.warehouses.findMany({
       where: { CompanyId: companyId },
+      skip,
+      take: limit,
       include: {
-        usersStaff: {
-          select: {
-            Name: true,
-          }
+        staff: {
+        select: {
+          Name: true,
+        }
         }
       }
-    });
+      }),
+      this.prismaService.warehouses.count({
+      where: { CompanyId: companyId }
+      })
+    ]);
 
-    return result.map(wh => {
-      const { usersStaff, ...warehouses } = wh;
-      return {
-        ...warehouses,
-        staffName: usersStaff.Name
-      }
-    });
+    return {
+      data: warehouses.map(wh => {
+        const { staff, ...warehouse } = wh;
+        return {
+          ...warehouse,
+          staffName: staff.Name
+        }
+      }),
+      totalElemnts: totalCount,
+      page,
+      limit,
+    }
   }
 
-  async searchWarehouse(companyId: number, name: string) {
-    const result = await this.prismaService.warehouses.findMany({
-      where: {
-        CompanyId: companyId,
-        Name: {
-          contains: name,
-          mode: 'insensitive',
+  async searchWarehouse(companyId: number, name: string, page: number = 1, limit: number = 10) {
+    const skip = (page - 1) * limit;
+    const [warehouses, totalCount] = await this.prismaService.$transaction([
+      this.prismaService.warehouses.findMany({
+        where: {
+          CompanyId: companyId,
+          Name: {
+            contains: name,
+            mode: 'insensitive',
+          },
         },
-      },
-      include: {
-        usersStaff: {
-          select: {
-            Name: true,
+        skip,
+        take: limit,
+        include: {
+          staff: {
+            select: {
+              Name: true,
+            }
           }
         }
-      }
-    })
+      }),
+      this.prismaService.warehouses.count({
+        where: {
+          CompanyId: companyId,
+          Name: {
+            contains: name,
+            mode: 'insensitive',
+          },
+        }
+      })
+    ]);
 
-    return result.map(wh => { 
-      const { usersStaff, ...warehouses } = wh;
-      return {
-        ...warehouses,
-        staffName: usersStaff.Name
-      }
-    });
+    return {
+      data: warehouses.map(wh => {
+        const { staff, ...warehouse } = wh;
+        return {
+          ...warehouse,
+          staffName: staff.Name
+        }
+      }),
+      totalElemnts: totalCount,
+      page,
+      limit,
+    }
   }
 
   async createWarehouse(companyId: number, whInfo: InsertWarehouse) {
@@ -69,13 +101,12 @@ export class WarehousesService {
   }
 
   async updateWarehouse(warehouseId: number, whInfo: UpdateWarehouse) {
-    const whUpdate = await this.prismaService.warehouses.findUnique({
+    await this.prismaService.warehouses.findUnique({
       where: {Id: warehouseId}
-    })
-
-    if (!whUpdate) {
+    }).catch((error) => {
+      console.log(error);
       throw new ForbiddenException('Cannot find warehouse');    
-    }
+    })
 
     return await this.prismaService.warehouses.update({
       where: { Id: warehouseId },

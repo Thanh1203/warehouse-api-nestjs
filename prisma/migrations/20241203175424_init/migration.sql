@@ -14,14 +14,24 @@ CREATE TYPE "StockTransferStatus" AS ENUM ('PENDING', 'RECEIVED', 'RECEIVING', '
 CREATE TYPE "DiscountType" AS ENUM ('ITEMPRICE', 'SHIPPING', 'ITEM_SHIPPING');
 
 -- CreateTable
+CREATE TABLE "company" (
+    "Id" SERIAL NOT NULL,
+    "Name" TEXT,
+    "CreateAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "company_pkey" PRIMARY KEY ("Id")
+);
+
+-- CreateTable
 CREATE TABLE "users" (
     "Id" SERIAL NOT NULL,
     "Name" TEXT NOT NULL,
-    "Position" TEXT NOT NULL,
+    "Role" TEXT NOT NULL,
     "CompanyId" INTEGER NOT NULL,
     "Address" TEXT,
     "Email" TEXT NOT NULL,
     "Password" TEXT NOT NULL,
+    "Phone" TEXT NOT NULL,
     "CreateAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "UpdateAt" TIMESTAMP(3) NOT NULL,
     "hashedRT" TEXT,
@@ -270,16 +280,16 @@ CREATE TABLE "customer_discounts" (
 );
 
 -- CreateTable
-CREATE TABLE "_CustomerDiscounts" (
+CREATE TABLE "_CustomersToDiscountOffers" (
     "A" INTEGER NOT NULL,
     "B" INTEGER NOT NULL
 );
 
 -- CreateIndex
-CREATE UNIQUE INDEX "users_CompanyId_key" ON "users"("CompanyId");
+CREATE UNIQUE INDEX "users_Email_key" ON "users"("Email");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "users_Email_key" ON "users"("Email");
+CREATE UNIQUE INDEX "users_Phone_key" ON "users"("Phone");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "warehouses_Code_key" ON "warehouses"("Code");
@@ -312,19 +322,22 @@ CREATE UNIQUE INDEX "stockTransfers_Code_key" ON "stockTransfers"("Code");
 CREATE UNIQUE INDEX "discountOffers_Code_key" ON "discountOffers"("Code");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "_CustomerDiscounts_AB_unique" ON "_CustomerDiscounts"("A", "B");
+CREATE UNIQUE INDEX "_CustomersToDiscountOffers_AB_unique" ON "_CustomersToDiscountOffers"("A", "B");
 
 -- CreateIndex
-CREATE INDEX "_CustomerDiscounts_B_index" ON "_CustomerDiscounts"("B");
+CREATE INDEX "_CustomersToDiscountOffers_B_index" ON "_CustomersToDiscountOffers"("B");
 
 -- AddForeignKey
-ALTER TABLE "warehouses" ADD CONSTRAINT "warehouses_CompanyId_fkey" FOREIGN KEY ("CompanyId") REFERENCES "users"("CompanyId") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "users" ADD CONSTRAINT "users_CompanyId_fkey" FOREIGN KEY ("CompanyId") REFERENCES "company"("Id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "warehouses" ADD CONSTRAINT "warehouses_CompanyId_fkey" FOREIGN KEY ("CompanyId") REFERENCES "company"("Id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "warehouses" ADD CONSTRAINT "warehouses_StaffId_fkey" FOREIGN KEY ("StaffId") REFERENCES "users"("Id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Suppliers" ADD CONSTRAINT "Suppliers_CompanyId_fkey" FOREIGN KEY ("CompanyId") REFERENCES "users"("CompanyId") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "Suppliers" ADD CONSTRAINT "Suppliers_CompanyId_fkey" FOREIGN KEY ("CompanyId") REFERENCES "company"("Id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "categories" ADD CONSTRAINT "categories_WarehouseId_fkey" FOREIGN KEY ("WarehouseId") REFERENCES "warehouses"("Id") ON DELETE RESTRICT ON UPDATE CASCADE;
@@ -333,7 +346,7 @@ ALTER TABLE "categories" ADD CONSTRAINT "categories_WarehouseId_fkey" FOREIGN KE
 ALTER TABLE "categories" ADD CONSTRAINT "categories_SupplierId_fkey" FOREIGN KEY ("SupplierId") REFERENCES "Suppliers"("Id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "categories" ADD CONSTRAINT "categories_CompanyId_fkey" FOREIGN KEY ("CompanyId") REFERENCES "users"("CompanyId") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "categories" ADD CONSTRAINT "categories_CompanyId_fkey" FOREIGN KEY ("CompanyId") REFERENCES "company"("Id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "classifies" ADD CONSTRAINT "classifies_WarehouseId_fkey" FOREIGN KEY ("WarehouseId") REFERENCES "warehouses"("Id") ON DELETE RESTRICT ON UPDATE CASCADE;
@@ -345,7 +358,7 @@ ALTER TABLE "classifies" ADD CONSTRAINT "classifies_CategoryId_fkey" FOREIGN KEY
 ALTER TABLE "classifies" ADD CONSTRAINT "classifies_SupplierId_fkey" FOREIGN KEY ("SupplierId") REFERENCES "Suppliers"("Id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "classifies" ADD CONSTRAINT "classifies_CompanyId_fkey" FOREIGN KEY ("CompanyId") REFERENCES "users"("CompanyId") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "classifies" ADD CONSTRAINT "classifies_CompanyId_fkey" FOREIGN KEY ("CompanyId") REFERENCES "company"("Id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "products" ADD CONSTRAINT "products_ClassifyId_fkey" FOREIGN KEY ("ClassifyId") REFERENCES "classifies"("Id") ON DELETE RESTRICT ON UPDATE CASCADE;
@@ -357,7 +370,7 @@ ALTER TABLE "products" ADD CONSTRAINT "products_CategoryId_fkey" FOREIGN KEY ("C
 ALTER TABLE "products" ADD CONSTRAINT "products_SupplierId_fkey" FOREIGN KEY ("SupplierId") REFERENCES "Suppliers"("Id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "products" ADD CONSTRAINT "products_CompanyId_fkey" FOREIGN KEY ("CompanyId") REFERENCES "users"("CompanyId") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "products" ADD CONSTRAINT "products_CompanyId_fkey" FOREIGN KEY ("CompanyId") REFERENCES "company"("Id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "price_configuration" ADD CONSTRAINT "price_configuration_ProductId_fkey" FOREIGN KEY ("ProductId") REFERENCES "products"("Id") ON DELETE RESTRICT ON UPDATE CASCADE;
@@ -366,7 +379,7 @@ ALTER TABLE "price_configuration" ADD CONSTRAINT "price_configuration_ProductId_
 ALTER TABLE "price_configuration" ADD CONSTRAINT "price_configuration_WarehouseId_fkey" FOREIGN KEY ("WarehouseId") REFERENCES "warehouses"("Id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "price_configuration" ADD CONSTRAINT "price_configuration_CompanyId_fkey" FOREIGN KEY ("CompanyId") REFERENCES "users"("CompanyId") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "price_configuration" ADD CONSTRAINT "price_configuration_CompanyId_fkey" FOREIGN KEY ("CompanyId") REFERENCES "company"("Id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "inventory_items" ADD CONSTRAINT "inventory_items_ProductId_fkey" FOREIGN KEY ("ProductId") REFERENCES "products"("Id") ON DELETE RESTRICT ON UPDATE CASCADE;
@@ -375,10 +388,10 @@ ALTER TABLE "inventory_items" ADD CONSTRAINT "inventory_items_ProductId_fkey" FO
 ALTER TABLE "inventory_items" ADD CONSTRAINT "inventory_items_WarehouseId_fkey" FOREIGN KEY ("WarehouseId") REFERENCES "warehouses"("Id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "inventory_items" ADD CONSTRAINT "inventory_items_CompanyId_fkey" FOREIGN KEY ("CompanyId") REFERENCES "users"("CompanyId") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "inventory_items" ADD CONSTRAINT "inventory_items_CompanyId_fkey" FOREIGN KEY ("CompanyId") REFERENCES "company"("Id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "customers" ADD CONSTRAINT "customers_CompanyId_fkey" FOREIGN KEY ("CompanyId") REFERENCES "users"("CompanyId") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "customers" ADD CONSTRAINT "customers_CompanyId_fkey" FOREIGN KEY ("CompanyId") REFERENCES "company"("Id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "customers" ADD CONSTRAINT "customers_WarehouseId_fkey" FOREIGN KEY ("WarehouseId") REFERENCES "warehouses"("Id") ON DELETE RESTRICT ON UPDATE CASCADE;
@@ -390,7 +403,7 @@ ALTER TABLE "invoices" ADD CONSTRAINT "invoices_CustomerId_fkey" FOREIGN KEY ("C
 ALTER TABLE "invoices" ADD CONSTRAINT "invoices_WarehouseId_fkey" FOREIGN KEY ("WarehouseId") REFERENCES "warehouses"("Id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "invoices" ADD CONSTRAINT "invoices_CompanyId_fkey" FOREIGN KEY ("CompanyId") REFERENCES "users"("CompanyId") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "invoices" ADD CONSTRAINT "invoices_CompanyId_fkey" FOREIGN KEY ("CompanyId") REFERENCES "company"("Id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "invoices" ADD CONSTRAINT "invoices_StaffId_fkey" FOREIGN KEY ("StaffId") REFERENCES "users"("Id") ON DELETE RESTRICT ON UPDATE CASCADE;
@@ -405,7 +418,7 @@ ALTER TABLE "invoice_details" ADD CONSTRAINT "invoice_details_ProductId_fkey" FO
 ALTER TABLE "purchase_orders" ADD CONSTRAINT "purchase_orders_SupplierId_fkey" FOREIGN KEY ("SupplierId") REFERENCES "Suppliers"("Id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "purchase_orders" ADD CONSTRAINT "purchase_orders_CompanyId_fkey" FOREIGN KEY ("CompanyId") REFERENCES "users"("CompanyId") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "purchase_orders" ADD CONSTRAINT "purchase_orders_CompanyId_fkey" FOREIGN KEY ("CompanyId") REFERENCES "company"("Id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "purchase_orders" ADD CONSTRAINT "purchase_orders_StaffId_fkey" FOREIGN KEY ("StaffId") REFERENCES "users"("Id") ON DELETE RESTRICT ON UPDATE CASCADE;
@@ -432,7 +445,7 @@ ALTER TABLE "stockTransfers" ADD CONSTRAINT "stockTransfers_FromWarehouseId_fkey
 ALTER TABLE "stockTransfers" ADD CONSTRAINT "stockTransfers_ToWarehouseId_fkey" FOREIGN KEY ("ToWarehouseId") REFERENCES "warehouses"("Id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "stockTransfers" ADD CONSTRAINT "stockTransfers_CompanyId_fkey" FOREIGN KEY ("CompanyId") REFERENCES "users"("CompanyId") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "stockTransfers" ADD CONSTRAINT "stockTransfers_CompanyId_fkey" FOREIGN KEY ("CompanyId") REFERENCES "company"("Id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "stockTransfers_details" ADD CONSTRAINT "stockTransfers_details_TransProductId_fkey" FOREIGN KEY ("TransProductId") REFERENCES "stockTransfers"("Id") ON DELETE RESTRICT ON UPDATE CASCADE;
@@ -441,7 +454,7 @@ ALTER TABLE "stockTransfers_details" ADD CONSTRAINT "stockTransfers_details_Tran
 ALTER TABLE "stockTransfers_details" ADD CONSTRAINT "stockTransfers_details_ProductId_fkey" FOREIGN KEY ("ProductId") REFERENCES "products"("Id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "discountOffers" ADD CONSTRAINT "discountOffers_CompanyId_fkey" FOREIGN KEY ("CompanyId") REFERENCES "users"("CompanyId") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "discountOffers" ADD CONSTRAINT "discountOffers_CompanyId_fkey" FOREIGN KEY ("CompanyId") REFERENCES "company"("Id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "customer_discounts" ADD CONSTRAINT "customer_discounts_CustomerId_fkey" FOREIGN KEY ("CustomerId") REFERENCES "customers"("Id") ON DELETE RESTRICT ON UPDATE CASCADE;
@@ -450,7 +463,7 @@ ALTER TABLE "customer_discounts" ADD CONSTRAINT "customer_discounts_CustomerId_f
 ALTER TABLE "customer_discounts" ADD CONSTRAINT "customer_discounts_DiscountId_fkey" FOREIGN KEY ("DiscountId") REFERENCES "discountOffers"("Id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "_CustomerDiscounts" ADD CONSTRAINT "_CustomerDiscounts_A_fkey" FOREIGN KEY ("A") REFERENCES "customers"("Id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "_CustomersToDiscountOffers" ADD CONSTRAINT "_CustomersToDiscountOffers_A_fkey" FOREIGN KEY ("A") REFERENCES "customers"("Id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "_CustomerDiscounts" ADD CONSTRAINT "_CustomerDiscounts_B_fkey" FOREIGN KEY ("B") REFERENCES "discountOffers"("Id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "_CustomersToDiscountOffers" ADD CONSTRAINT "_CustomersToDiscountOffers_B_fkey" FOREIGN KEY ("B") REFERENCES "discountOffers"("Id") ON DELETE CASCADE ON UPDATE CASCADE;

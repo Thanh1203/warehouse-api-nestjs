@@ -12,12 +12,14 @@ export class WarehousesController {
   @Get()
   async gethWarehouses(
     @GetUserInfor('companyId') companyId: number,
-    @Query('name') name?: string
+    @Query('page') page: number = 1,
+    @Query('limit') limit: number = 10,
+    @Query('name') name?: string,
   ) {
     if (name) {
-      return await this.warehousesService.searchWarehouse(companyId, name);
+      return await this.warehousesService.searchWarehouse(companyId, name, page, limit);
     } else {
-      return await this.warehousesService.gethWarehouses(companyId);
+      return await this.warehousesService.getAllWarehouse(companyId, page, limit);
     }
   }
     
@@ -34,13 +36,13 @@ export class WarehousesController {
     @Param('id', ParseIntPipe) warehouseId: number,
     @Body() dto: UpdateWarehouse
   ) {
-    return await this.warehousesService.updateWarehouse(warehouseId, dto);
+    // return await this.warehousesService.updateWarehouse(warehouseId, dto);
   }
 
   @Delete(':id')
   async deleteWarehouse(
     @Param('id', ParseIntPipe) warehouseId: number,
   ) {
-    return await this.warehousesService.deleteWarehouse(warehouseId);
+    // return await this.warehousesService.deleteWarehouse(warehouseId);
   }
 }

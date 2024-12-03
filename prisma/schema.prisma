@@ -20,35 +20,48 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model Company {
+  Id Int @id @default(autoincrement())
+  Name String?
+  CreateAt DateTime @default(now())
+
+  users Users[]
+  warehouses Warehouses[]
+  suppliers Suppliers[]
+  categories Categories[]
+  classifies Classifies[]
+  products Products[]
+  price_configuration Price_Configuration[]
+  inventory_items Inventory_Items[]
+  customers Customers[]
+  invoicesCompany Invoices[]
+  purchase_orders Purchase_Orders[]
+  stockTransfers StockTransfers[]
+  discountOffers DiscountOffers[]
+
+  @@map("company")
+}
+
 model Users {
   Id Int @id @default(autoincrement())
   Name String
-  Position String
-  CompanyId Int @unique
+  Role String
+  CompanyId Int
   Address String?
   Email String @unique
   Password String
+  Phone String @unique
   CreateAt DateTime @default(now())
   UpdateAt DateTime @updatedAt
   hashedRT String?
 
-  whCompany Warehouses[] @relation("userCompany")
-  whStaff Warehouses[] @relation("usersStaff")
-  suppliers Suppliers[]
-  products Products[]
-  categories Categories[]
-  classifies Classifies[]
-  price_configuration Price_Configuration[]
-  inventory_items Inventory_Items[]
-  StockTransfersCompany StockTransfers[] @relation("userCompanyTransfers")
-  StockTransfersStaff StockTransfers[] @relation("userStaffTransfers")
-  customers Customers[]
-  discountOffers DiscountOffers[]
-  invoicesCompany Invoices[] @relation("userCompany")
-  invoicesStaff Invoices[] @relation("invoicesStaff")
-  purchase_orders Purchase_Orders[] @relation("userCompany")
-  orderStaff Purchase_Orders[] @relation("orderStaff")
-  
+  company Company @relation(fields: [CompanyId], references: [Id])
+
+  warehouses Warehouses[]
+  stockTransfers StockTransfers[]
+  invoices Invoices[]
+  purchase_orders Purchase_Orders[]
+
   @@map("users")
 }
 
@@ -70,8 +83,8 @@ model Warehouses {
   customers Customers[]
   invoices Invoices[]
 
-  userCompany Users @relation("userCompany", fields: [CompanyId], references: [CompanyId])
-  usersStaff Users @relation("usersStaff", fields: [StaffId], references: [Id])
+  company Company @relation(fields: [CompanyId], references: [Id])
+  staff Users @relation(fields: [StaffId], references: [Id])
 
   @@map("warehouses")
 }
@@ -90,7 +103,7 @@ model Suppliers {
   products Products[]
   purchase_orders Purchase_Orders[]
 
-  companyId Users @relation(fields: [CompanyId], references: [CompanyId])
+  company Company @relation(fields: [CompanyId], references: [Id])
 
   @@map("Suppliers")
 }
@@ -110,7 +123,7 @@ model Categories {
 
   warehouses Warehouses @relation(fields: [WarehouseId], references: [Id])
   suppliers Suppliers @relation(fields: [SupplierId], references: [Id])
-  companyId Users @relation(fields: [CompanyId], references: [CompanyId])
+  company Company @relation(fields: [CompanyId], references: [Id])
 
   @@map("categories")
 }
@@ -131,7 +144,7 @@ model Classifies {
   warehouse Warehouses @relation(fields: [WarehouseId], references: [Id])
   categories Categories @relation(fields: [CategoryId], references: [Id])
   suppliers Suppliers @relation(fields: [SupplierId], references: [Id])
-  companyId Users @relation(fields: [CompanyId], references: [CompanyId])
+  company Company @relation(fields: [CompanyId], references: [Id])
 
   @@map("classifies")  
 }
@@ -158,7 +171,7 @@ model Products {
   classifies Classifies @relation(fields: [ClassifyId], references: [Id])
   categories Categories @relation(fields: [CategoryId], references: [Id])
   suppliers Suppliers @relation(fields: [SupplierId], references: [Id])
-  companyId Users @relation(fields: [CompanyId], references: [CompanyId])
+  company Company @relation(fields: [CompanyId], references: [Id])
 
   price_configuration Price_Configuration[]
   inventory_items Inventory_Items[]
@@ -181,7 +194,7 @@ model Price_Configuration {
 
   products Products @relation(fields: [ProductId], references: [Id])
   warehouse Warehouses @relation(fields: [WarehouseId], references: [Id])
-  companyId Users @relation(fields: [CompanyId], references: [CompanyId])
+  company Company @relation(fields: [CompanyId], references: [Id])
 
   @@map("price_configuration")
 }
@@ -204,7 +217,7 @@ model Inventory_Items {
 
   products Products @relation(fields: [ProductId], references: [Id])
   warehouse Warehouses @relation(fields: [WarehouseId], references: [Id])
-  companyId Users @relation(fields: [CompanyId], references: [CompanyId])
+  company Company @relation(fields: [CompanyId], references: [Id])
 
   @@map("inventory_items")
 }
@@ -225,9 +238,9 @@ model Customers {
 
   invoices Invoices[]
   customerDiscounts CustomerDiscounts[]
+  discounts DiscountOffers[]
 
-  discounts DiscountOffers[] @relation("CustomerDiscounts")
-  companyId Users @relation(fields: [CompanyId], references: [CompanyId])
+  company Company @relation(fields: [CompanyId], references: [Id])
   warehouse Warehouses @relation(fields: [WarehouseId], references: [Id])
 
   @@map("customers")
@@ -246,8 +259,8 @@ model Invoices {
 
   customers Customers @relation(fields: [CustomerId], references: [Id])
   warehouse Warehouses @relation(fields: [WarehouseId], references: [Id])
-  companyId Users @relation("userCompany", fields: [CompanyId], references: [CompanyId])
-  staff Users @relation("invoicesStaff", fields: [StaffId], references: [Id])
+  company Company @relation(fields: [CompanyId], references: [Id])
+  staff Users @relation(fields: [StaffId], references: [Id])
 
   invoice_details Invoice_Details[]
 
@@ -302,8 +315,8 @@ model Purchase_Orders {
   WarehouseIds Int[]
 
   suppliers Suppliers @relation(fields: [SupplierId], references: [Id])
-  companyId Users @relation("userCompany", fields: [CompanyId], references: [CompanyId])
-  staff Users @relation( "orderStaff", fields: [StaffId], references: [Id])
+  company Company @relation(fields: [CompanyId], references: [Id])
+  staff Users @relation(fields: [StaffId], references: [Id])
 
   purchase_order_details Purchase_Order_Details[]
   purchase_return_details Purchase_Return_Details[]
@@ -363,10 +376,10 @@ model StockTransfers {
   Status StockTransferStatus @default(PENDING)
   CompanyId Int
 
-  staff Users @relation("userStaffTransfers", fields: [StaffId], references: [Id])
+  staff Users @relation(fields: [StaffId], references: [Id])
   fromWarehouse  Warehouses @relation("FromWarehouse", fields: [FromWarehouseId], references: [Id])
   toWarehouse    Warehouses @relation("ToWarehouse", fields: [ToWarehouseId], references: [Id])
-  company Users @relation("userCompanyTransfers", fields: [CompanyId], references: [CompanyId])
+  company Company @relation(fields: [CompanyId], references: [Id])
   
   StockTransfers_details StockTransfers_Details[]
 
@@ -406,8 +419,8 @@ model DiscountOffers {
   Type DiscountType
 
   discountCustomers CustomerDiscounts[]
-  customers Customers[] @relation("CustomerDiscounts")
-  companyId Users @relation(fields: [CompanyId], references: [CompanyId])
+  customers Customers[]
+  company Company @relation(fields: [CompanyId], references: [Id])
 
   @@map("discountOffers")
 }

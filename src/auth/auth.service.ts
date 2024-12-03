@@ -8,77 +8,92 @@ import { FieldsToDelete } from 'src/constants';
 
 @Injectable()
 export class AuthService {
-  constructor(private prismaService: PrismaService, private jwtService: JwtService) {}
-  
+  constructor(
+    private prismaService: PrismaService,
+    private jwtService: JwtService,
+  ) {}
+
   async signUpUser(dto: signUpDto): Promise<Tokens> {
     const hashedPassword = await this.hashData(dto.password);
-    const newCompanyId = await this.generateCompanyId();
-    try {
-      const newUser = await this.prismaService.users.create({
+    const newCompanyId = await this.prismaService.company
+      .create({
+        data: {
+          Name: 'New company',
+        },
+      })
+      .catch(() => {
+        throw new ForbiddenException('Cannot create new company');
+      });
+
+    const newUser = await this.prismaService.users
+      .create({
         data: {
           Name: dto.name,
-          Position: 'Admin',
-          CompanyId: newCompanyId,
+          Role: 'Admin',
+          CompanyId: newCompanyId.Id,
           Address: dto.address,
           Email: dto.email,
-          Password: hashedPassword
+          Password: hashedPassword,
+          Phone: dto.phone,
         },
         select: {
           Id: true,
           Name: true,
           Email: true,
-          Position: true,
+          Role: true,
           CompanyId: true,
           Address: true,
+          Phone: true,
+        },
+      })
+      .catch((error) => {
+        if (error.code === 'P2002') {
+          throw new ForbiddenException('Email already exists');
         }
-      })
-      const tokens = await this.getTokens(newUser.Id, newUser.Email, newUser.Position, newUser.CompanyId)
-      await this.updateRtHash(newUser.Id, tokens.refresh_token);
-      FieldsToDelete.forEach(field => {
-        delete newUser[field];
-      })
-      return {
-        ...newUser,
-        ...tokens
-      };
-    } catch (error) {
-      if (error.code === 'P2002') {
-        throw new ForbiddenException('Email already exists')
-      }
-    }
+        throw new ForbiddenException('Cannot create new user');
+      });
+
+    const tokens = await this.getTokens(
+      newUser.Id,
+      newUser.Email,
+      newUser.Role,
+      newCompanyId.Id,
+    );
+    await this.updateRtHash(newUser.Id, tokens.refresh_token);
+    FieldsToDelete.forEach((field) => {
+      delete newUser[field];
+    });
+    return {
+      ...newUser,
+      ...tokens,
+    };
   }
-  
-  async signinUser(dto: signInDto): Promise<Tokens> { 
+
+  async signinUser(dto: signInDto): Promise<Tokens> {
     const user = await this.prismaService.users.findUnique({
       where: {
-        Email: dto.email
-      }
-    })
-
-    if (!user) {
-      throw new ForbiddenException('Access Denied')
-    }
-
-    const passwordMatches = await argon.verify(user.Password, dto.password)
-
-    if (!passwordMatches) {
-      throw new ForbiddenException('Incorrect password')
-    }
-
-    const tokens = await this.getTokens(user.Id, user.Email, user.Position, user.CompanyId)
+        Email: dto.email,
+      },
+    }).catch((error) => {
+      console.log(error);
+      throw new ForbiddenException('Access Denied');
+    });
+    await argon.verify(user.Password, dto.password).catch((error) => { 
+      console.log(error);
+      throw new ForbiddenException('Incorrect password') 
+    });
+    const tokens = await this.getTokens(user.Id, user.Email, user.Role, user.CompanyId)
     await this.updateRtHash(user.Id, tokens.refresh_token);
-
     FieldsToDelete.forEach(field => {
       delete user[field];
     })
-
     return {
       ...user,
       ...tokens
     };
   }
-  
-  async logoutUser(userId: number) { 
+
+  async logoutUser(userId: number) {
     await this.prismaService.users.updateMany({
       where: {
         Id: userId,
@@ -101,83 +116,74 @@ export class AuthService {
       where: {
         Id: userId
       }
-    })
-    
-    if (!user) {
+    }).catch((error) => {
+      console.log(error);
+      throw new ForbiddenException('Access Denied');
+    });
+
+    await argon.verify(user.hashedRT, rt).catch((error) => {
+      console.log(error);
       throw new ForbiddenException("Acces denied")
-    }
+    });
 
-    const rMatches = await argon.verify(user.hashedRT, rt)
-    
-    if (!rMatches) {
-      throw new ForbiddenException("Acces denied")
-    }
-
-    const tokens = await this.getTokens(user.Id, user.Email, user.Position, user.CompanyId)
-
+    const tokens = await this.getTokens(user.Id, user.Email, user.Role, user.CompanyId)
     await this.updateRtHash(user.Id, tokens.refresh_token)
     return tokens;
    }
-  
+
   //other function
   hashData(data: string) {
     return argon.hash(data);
   }
 
-  async generateCompanyId() {
-    while (true) {
-      const randomId = Math.floor(1000 + Math.random() * 9000);
-      
-      const checkId = await this.prismaService.users.findFirst({
-        where: {
-          CompanyId: randomId,
-        }
-      })
-
-      if (!checkId) {
-        return randomId
-      }
-    }
-  }
-
-  async getTokens(userId: number, email: string, role: string, companyId: number): Promise<Tokens> {
+  async getTokens(
+    userId: number,
+    email: string,
+    role: string,
+    companyId: number,
+  ): Promise<Tokens> {
     const [at, rt] = await Promise.all([
-      this.jwtService.signAsync({
-        id: userId,
-        email,
-        role,
-        companyId,
-      }, {
-        secret: 'at-secret',
-        expiresIn: '15m',
-      }),
-      this.jwtService.signAsync({
-        id: userId,
-        email,
-        role,
-        companyId,
-      }, {
-        secret: 'rt-secret',
-        expiresIn: '30d',
-      })
-    ])
+      this.jwtService.signAsync(
+        {
+          id: userId,
+          email,
+          role,
+          companyId,
+        },
+        {
+          secret: 'at-secret',
+          expiresIn: '15m',
+        },
+      ),
+      this.jwtService.signAsync(
+        {
+          id: userId,
+          email,
+          role,
+          companyId,
+        },
+        {
+          secret: 'rt-secret',
+          expiresIn: '30d',
+        },
+      ),
+    ]);
 
     return {
       access_token: at,
-      refresh_token: rt
-    }
+      refresh_token: rt,
+    };
   }
 
   async updateRtHash(userId: number, rt: string) {
-    const hash = await this.hashData(rt)
+    const hash = await this.hashData(rt);
     await this.prismaService.users.update({
       where: {
-        Id: userId
+        Id: userId,
       },
       data: {
-        hashedRT: hash
-      }
-    })
+        hashedRT: hash,
+      },
+    });
   }
-
 }
