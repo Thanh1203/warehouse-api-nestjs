@@ -3,18 +3,15 @@ import { PrismaService } from 'src/prisma/prisma.service';
 import { signInDto, signUpDto } from './dto';
 import * as argon from 'argon2';
 import { Tokens } from './types';
-import { JwtService } from '@nestjs/jwt';
 import { FieldsToDelete } from 'src/constants';
+import { getTokens, hashData, updateRtHash } from '@/helpers';
 
 @Injectable()
 export class AuthService {
-  constructor(
-    private prismaService: PrismaService,
-    private jwtService: JwtService,
-  ) {}
+  constructor(private prismaService: PrismaService) {}
 
   async signUpUser(dto: signUpDto): Promise<Tokens> {
-    const hashedPassword = await this.hashData(dto.password);
+    const hashedPassword = await hashData(dto.password);
     const newCompanyId = await this.prismaService.company
       .create({
         data: {
@@ -53,13 +50,13 @@ export class AuthService {
         throw new ForbiddenException('Cannot create new user');
       });
 
-    const tokens = await this.getTokens(
+    const tokens = await getTokens(
       newUser.Id,
       newUser.Email,
       newUser.Role,
       newCompanyId.Id,
     );
-    await this.updateRtHash(newUser.Id, tokens.refresh_token);
+    await updateRtHash(newUser.Id, tokens.refresh_token);
     FieldsToDelete.forEach((field) => {
       delete newUser[field];
     });
@@ -82,8 +79,8 @@ export class AuthService {
       console.log(error);
       throw new ForbiddenException('Incorrect password') 
     });
-    const tokens = await this.getTokens(user.Id, user.Email, user.Role, user.CompanyId)
-    await this.updateRtHash(user.Id, tokens.refresh_token);
+    const tokens = await getTokens(user.Id, user.Email, user.Role, user.CompanyId)
+    await updateRtHash(user.Id, tokens.refresh_token);
     FieldsToDelete.forEach(field => {
       delete user[field];
     })
@@ -126,64 +123,9 @@ export class AuthService {
       throw new ForbiddenException("Acces denied")
     });
 
-    const tokens = await this.getTokens(user.Id, user.Email, user.Role, user.CompanyId)
-    await this.updateRtHash(user.Id, tokens.refresh_token)
+    const tokens = await getTokens(user.Id, user.Email, user.Role, user.CompanyId)
+    await updateRtHash(user.Id, tokens.refresh_token)
     return tokens;
-   }
-
-  //other function
-  hashData(data: string) {
-    return argon.hash(data);
   }
 
-  async getTokens(
-    userId: number,
-    email: string,
-    role: string,
-    companyId: number,
-  ): Promise<Tokens> {
-    const [at, rt] = await Promise.all([
-      this.jwtService.signAsync(
-        {
-          id: userId,
-          email,
-          role,
-          companyId,
-        },
-        {
-          secret: 'at-secret',
-          expiresIn: '15m',
-        },
-      ),
-      this.jwtService.signAsync(
-        {
-          id: userId,
-          email,
-          role,
-          companyId,
-        },
-        {
-          secret: 'rt-secret',
-          expiresIn: '30d',
-        },
-      ),
-    ]);
-
-    return {
-      access_token: at,
-      refresh_token: rt,
-    };
-  }
-
-  async updateRtHash(userId: number, rt: string) {
-    const hash = await this.hashData(rt);
-    await this.prismaService.users.update({
-      where: {
-        Id: userId,
-      },
-      data: {
-        hashedRT: hash,
-      },
-    });
-  }
 }

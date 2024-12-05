@@ -62,6 +62,7 @@ model Users {
   invoices Invoices[]
   purchase_orders Purchase_Orders[]
 
+  @@index([Phone, Email])
   @@map("users")
 }
 

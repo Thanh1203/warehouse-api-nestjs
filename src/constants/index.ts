@@ -8,3 +8,5 @@ export const PurchaseOrderStatus = {
   RECEIVING: 'RECEIVING', // đang nhận
   RECEIVED_PART: "RECEIVED_PART" // nhận một phần
 }
+
+export const ActionUpdate = ['update', 'updateMany', 'delete']
