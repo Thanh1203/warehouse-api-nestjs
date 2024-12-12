@@ -4,6 +4,7 @@ import { AtGuard } from '../auth/common/guards';
 import { GetUserInfor } from '../auth/common/decorators';
 import { InsertUserDto, UpdateUserDto } from './dto';
 import { ParseIntArrayPipe } from '@/pipes';
+import { StatusUser } from '@prisma/client';
 
 @UseGuards(AtGuard)
 @Controller('users')
@@ -17,12 +18,16 @@ export class UsersController {
     @GetUserInfor('companyId') companyId: number,
     @Query('page') page: number = 1,
     @Query('limit') limit: number = 10,
-    @Query('query') query: Record<string, any>,
+    @Query('name') name?: string,
+    @Query('email') email?: string,
+    @Query('phone') phone?: string,
+    @Query('role') role?: string,
+    @Query('status') status?: StatusUser,
   ){
-    if (Object.keys(query).length === 0) {
-      return await this.usersService.getAllUser(page, limit, companyId);
+    if (name || email || phone || role || status) {
+      return await this.usersService.searchUser(page, limit, companyId, name, email, phone, role, status);
     } else {
-      return await this.usersService.searchUser(page, limit, companyId, query);
+      return await this.usersService.getAllUser(page, limit, companyId);
     }
   }
 
@@ -51,11 +56,4 @@ export class UsersController {
     return await this.usersService.updateUser(companyId, id, dto);
   }
 
-  // @Delete()
-  // async deleteUsers(    
-  //   @GetUserInfor('companyId') companyId: number,
-  //   @Body('userIds', ParseIntArrayPipe) userIds: number[]
-  // ){
-  //   return await this.usersService.deleteUsers(companyId, userIds);
-  // }
 }

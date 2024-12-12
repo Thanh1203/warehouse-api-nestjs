@@ -1,3 +1,4 @@
+import { StatusUser } from "@prisma/client"
 import { IsEmail, IsNotEmpty, IsOptional, IsString } from "class-validator"
 
 export class UpdateUserDto {
@@ -25,4 +26,8 @@ export class UpdateUserDto {
   @IsString()
   @IsOptional()
   role?: string
+
+  @IsString()
+  @IsOptional()
+  status?: StatusUser
 }

@@ -42,6 +42,10 @@ model Company {
   @@map("company")
 }
 
+enum StatusUser {
+  ACTIVE
+  DEACTIVE
+}
 model Users {
   Id Int @id @default(autoincrement())
   Name String
@@ -54,6 +58,7 @@ model Users {
   CreateAt DateTime @default(now())
   UpdateAt DateTime @updatedAt
   hashedRT String?
+  Status StatusUser @default(ACTIVE)
 
   company Company @relation(fields: [CompanyId], references: [Id])
 

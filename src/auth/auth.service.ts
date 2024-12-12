@@ -70,11 +70,17 @@ export class AuthService {
     const user = await this.prismaService.users.findUnique({
       where: {
         Email: dto.email,
+        Status: 'ACTIVE',
       },
     }).catch((error) => {
       console.log(error);
       throw new ForbiddenException('Access Denied');
     });
+
+    if (!user) {
+      throw new ForbiddenException('User not found');
+    }
+
     await argon.verify(user.Password, dto.password).catch((error) => { 
       console.log(error);
       throw new ForbiddenException('Incorrect password') 
@@ -83,7 +89,7 @@ export class AuthService {
     await updateRtHash(user.Id, tokens.refresh_token);
     FieldsToDelete.forEach(field => {
       delete user[field];
-    })
+    });
     return {
       ...user,
       ...tokens
@@ -123,9 +129,15 @@ export class AuthService {
       throw new ForbiddenException("Acces denied")
     });
 
-    const tokens = await getTokens(user.Id, user.Email, user.Role, user.CompanyId)
-    await updateRtHash(user.Id, tokens.refresh_token)
-    return tokens;
+    const tokens = await getTokens(user.Id, user.Email, user.Role, user.CompanyId);
+    await updateRtHash(user.Id, tokens.refresh_token);
+    FieldsToDelete.forEach(field => {
+      delete user[field];
+    });
+    return {
+      ...user,
+      ...tokens
+    };
   }
 
 }
