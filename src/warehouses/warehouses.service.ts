@@ -10,9 +10,9 @@ export class WarehousesService {
     const skip = (page - 1) * limit;
     const [warehouses, totalCount] = await this.prismaService.$transaction([
       this.prismaService.warehouses.findMany({
-      where: { CompanyId: companyId },
-      skip,
-      take: limit,
+        where: { CompanyId: companyId },
+      // skip,
+      // take: limit,
       include: {
         staff: {
         select: {
@@ -22,7 +22,7 @@ export class WarehousesService {
       }
       }),
       this.prismaService.warehouses.count({
-      where: { CompanyId: companyId }
+        where: { CompanyId: companyId }
       })
     ]);
 
@@ -35,8 +35,8 @@ export class WarehousesService {
         }
       }),
       totalElemnts: totalCount,
-      page,
-      limit,
+      // page,
+      // limit,
     }
   }
 
@@ -51,8 +51,8 @@ export class WarehousesService {
             mode: 'insensitive',
           },
         },
-        skip,
-        take: limit,
+        // skip,
+        // take: limit,
         include: {
           staff: {
             select: {
@@ -81,8 +81,8 @@ export class WarehousesService {
         }
       }),
       totalElemnts: totalCount,
-      page,
-      limit,
+      // page,
+      // limit,
     }
   }
 
@@ -128,10 +128,10 @@ export class WarehousesService {
     }
 
     const checkProductInWh = await this.prismaService.inventory_Items.findFirst({
-      where: {WarehouseId: warehouseId, Quantity: 0}
+      where: { WarehouseId: warehouseId, Quantity: { gt: 0 } }
     })
 
-    if (!checkProductInWh) {
+    if (checkProductInWh) {
       throw new ForbiddenException('Still in stock')
     }
 

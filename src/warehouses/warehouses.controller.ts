@@ -36,13 +36,13 @@ export class WarehousesController {
     @Param('id', ParseIntPipe) warehouseId: number,
     @Body() dto: UpdateWarehouse
   ) {
-    // return await this.warehousesService.updateWarehouse(warehouseId, dto);
+    return await this.warehousesService.updateWarehouse(warehouseId, dto);
   }
 
   @Delete(':id')
   async deleteWarehouse(
     @Param('id', ParseIntPipe) warehouseId: number,
   ) {
-    // return await this.warehousesService.deleteWarehouse(warehouseId);
+    return await this.warehousesService.deleteWarehouse(warehouseId);
   }
 }
