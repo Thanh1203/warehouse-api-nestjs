@@ -17,12 +17,16 @@ export class ClassifiesController {
     @Query('warehouseId') warehouseId ?: number,
     @Query('supplierId') supplierId?: number,
     @Query('categoryId') categoryId?: number,
-    @Query('name') name?: string
+    @Query('name') name?: string,
+    @Query('code')  code?: string,
+    @Query('isRestock') isRestock?: string,
+    @Query('page') page: number = 1,
+    @Query('limit') limit: number = 10,
   ) {
-    if (!warehouseId && !supplierId && !categoryId && !name) {
-      return await this.classifiesService.getClassifies(companyId);
+    if (!warehouseId && !supplierId && !categoryId && !name && !isRestock && !code) {
+      return await this.classifiesService.getClassifies(companyId, page, limit);
     } else {
-      return await this.classifiesService.searchClassifies(companyId, warehouseId, categoryId, supplierId, name);
+      return await this.classifiesService.searchClassifies(companyId, warehouseId, categoryId, supplierId, name, code, isRestock, page, limit);
     }
   }
 
@@ -46,7 +50,7 @@ export class ClassifiesController {
   @Delete()
   async deleteClassifies(
     @GetUserInfor('companyId') companyId: number,
-    @Body('classifyIds', ParseIntArrayPipe) classifyIds: number[]
+    @Body('classifyIds', new ParseIntArrayPipe('classifyIds')) classifyIds: number[]
   ): Promise<{ message: string; }> {
     return await this.classifiesService.deleteClassify(classifyIds, companyId);
   }

@@ -46,8 +46,8 @@ export class InvoicesController {
   @Delete()
   async deleteInvoice(
     @GetUserInfor('companyId') companyId: number,
-    @Query('ids', ParseIntArrayPipe) warehouseId: number,
-    @Body('ids', ParseIntArrayPipe) ids: number[]
+    @Query('ids') warehouseId: number,
+    @Body('ids',new ParseIntArrayPipe('ids')) ids: number[]
   ) { 
     return await this.invoicesService.deleteInvoices(companyId, warehouseId, ids);
   }

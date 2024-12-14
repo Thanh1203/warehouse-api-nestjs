@@ -1,7 +1,9 @@
 import { PrismaService } from '@/src/prisma/prisma.service';
 
+const prismaService = new PrismaService();
+
 export const checkStock = async (companyId: number, ids: number[]): Promise<{ [key: number]: boolean }> => {
-  const results = await PrismaService.prototype.products.findMany({
+  const results = await prismaService.products.findMany({
     where: {
       CompanyId: companyId,
       ClassifyId: { in: ids },

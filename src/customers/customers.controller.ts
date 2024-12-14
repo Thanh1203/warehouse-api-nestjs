@@ -60,7 +60,7 @@ export class CustomersController {
   @Delete()
   async deleteCustomers(
     @GetUserInfor('companyId') companyId: number,
-    @Body('ids', ParseIntArrayPipe) ids: number[],
+    @Body('ids', new ParseIntArrayPipe('ids')) ids: number[],
   ) { 
     return await this.customersService.deleteCustomers(companyId, ids);
   }

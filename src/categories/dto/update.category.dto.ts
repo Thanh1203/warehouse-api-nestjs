@@ -8,7 +8,7 @@ export class UpdateCategory {
 
   @IsOptional()
   @IsBoolean()
-  isRestock?: boolean;
+  isRestock?: string;
 
   @Transform(({ value }) => parseInt(value, 10))
   @IsNumber()

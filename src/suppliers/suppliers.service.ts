@@ -7,21 +7,58 @@ import { checkStock } from '@/helpers';
 export class SuppliersService {
   constructor(private prismaService: PrismaService) {}
 
-  async getSupplier(companyId: number) {
-    return await this.prismaService.suppliers.findMany({ where: { CompanyId: companyId, IsCollab: true} });
+  async getSupplier(companyId: number, page: number = 1, limit: number = 10) {
+    const skip = (page - 1) * limit;
+    const [suppliers, totalCount] = await this.prismaService.$transaction([
+      this.prismaService.suppliers.findMany({
+        where: { CompanyId: companyId },
+        // skip,
+        // take: limit,
+      }),
+      this.prismaService.suppliers.count({
+        where: { CompanyId: companyId}
+      })
+    ]);
+    return {
+      data: suppliers,
+      totalRecord: totalCount,
+      // page,
+      // limit,
+    }
   }
 
-  async searchSupplier(companyId: number, name: string) {
-    return await this.prismaService.suppliers.findMany({
-      where: {
-        CompanyId: companyId,
-        IsCollab: true,
-        Name: {
-          contains: name,
-          mode: 'insensitive',
+  async searchSupplier(companyId: number, name: string, isCollab: string, page: number = 1, limit: number = 10) {
+    const skip = (page - 1) * limit;
+    const [suppliers, totalCount] = await this.prismaService.$transaction([
+      this.prismaService.suppliers.findMany({
+        where: {
+          CompanyId: companyId,
+          ...(isCollab && {IsCollab: JSON.parse(isCollab)}),
+          Name: {
+            contains: name,
+            mode: 'insensitive',
+          }
+        },
+        // skip,
+        // take: limit,
+      }),
+      this.prismaService.suppliers.count({
+        where: {
+          CompanyId: companyId,
+          ...(isCollab && {IsCollab: JSON.parse(isCollab)}),
+          Name: {
+            contains: name,
+            mode: 'insensitive',
+          }
         }
-      }
-    });
+      })
+    ]);
+    return {
+      data: suppliers,
+      totalRecord: totalCount,
+      // page,
+      // limit,
+    }
   }
 
 
@@ -44,8 +81,8 @@ export class SuppliersService {
   }
 
 
-  async updateSupplier(supplierId: number, supplierInfo: UpdateSupplier) {
-    const supplierUpdate = await this.prismaService.suppliers.findUnique({ where: { Id: supplierId, IsCollab: true } });
+  async updateSupplier(companyId: number, supplierId: number, supplierInfo: UpdateSupplier) {
+    const supplierUpdate = await this.prismaService.suppliers.findUnique({ where: {CompanyId: companyId,  Id: supplierId } });
 
     if (!supplierUpdate) {
       throw new ForbiddenException('Cannot find supplier');    
@@ -55,7 +92,8 @@ export class SuppliersService {
       where: { Id: supplierId },
       data: {
         Name: supplierInfo.name,
-        Origin: supplierInfo.origin
+        Origin: supplierInfo.origin,
+        IsCollab: supplierInfo.isCollab
       }
     })
   }
@@ -80,12 +118,15 @@ export class SuppliersService {
           await this.prismaService.classifies.deleteMany({ where: { SupplierId: { in: ids }, product: { none: {} } } });
           await this.prismaService.categories.deleteMany({ where: { SupplierId: { in: ids }, classifies: { none: {} } } });
 
-          const stockMap = await checkStock(companyId, ids);
+          const stockMap = await this.checkStock(companyId, ids);
           for (const supplierId of ids) {
             if (!stockMap[supplierId]) {
-              await this.prismaService.suppliers.delete({
-                where: { Id: supplierId }
-              });
+              const supplierExists = await this.prismaService.suppliers.findUnique({ where: { Id: supplierId } });
+              if (supplierExists) {
+                await this.prismaService.suppliers.delete({
+                  where: { Id: supplierId }
+                });
+              }
             }
           }
         } catch (error) {
@@ -93,5 +134,29 @@ export class SuppliersService {
         }
       }, 0);
     }
+  }
+
+  async checkStock(companyId: number, supplierIds: number[]): Promise<{ [key: number]: boolean }> {
+    const results = await this.prismaService.products.findMany({
+      where: {
+        CompanyId: companyId,
+        SupplierId: { in: supplierIds },
+        inventory_items: { some: { Quantity: { gt: 0 } } },
+      },
+      select: {
+        SupplierId: true,
+      },
+    });
+
+    const stockMap = supplierIds.reduce((acc, id) => {
+      acc[id] = false;
+      return acc;
+    }, {} as { [key: number]: boolean });
+
+    results.forEach(result => {
+      stockMap[result.SupplierId] = true;
+    });
+
+    return stockMap;
   }
 }

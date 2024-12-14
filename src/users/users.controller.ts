@@ -3,7 +3,6 @@ import { UsersService } from './users.service';
 import { AtGuard } from '../auth/common/guards';
 import { GetUserInfor } from '../auth/common/decorators';
 import { InsertUserDto, UpdateUserDto } from './dto';
-import { ParseIntArrayPipe } from '@/pipes';
 import { StatusUser } from '@prisma/client';
 
 @UseGuards(AtGuard)

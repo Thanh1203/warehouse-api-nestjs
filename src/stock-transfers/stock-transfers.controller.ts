@@ -56,6 +56,6 @@ export class StockTransfersController {
   @Delete()
   async deleteStockTransfers(
     @GetUserInfor('companyId') companyId: number,
-    @Query('ids', ParseIntArrayPipe) ids: number[],
+    @Query('ids', new ParseIntArrayPipe('ids')) ids: number[],
   ) { }
 }

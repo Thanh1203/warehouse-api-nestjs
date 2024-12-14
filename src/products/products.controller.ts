@@ -16,14 +16,15 @@ export class ProductsController {
     @Query('classifyId') classifyId?: number,
     @Query('supplierId') supplierId?: number,
     @Query('name') name?: string,
-    @Query('material') material?: string,
-    @Query('color') color?: string,
-    @Query('design') design?: string
+    @Query('code') code?: string,
+    @Query('isRestock') isRestock?: string,
+    @Query('page') page: number = 1,
+    @Query('limit') limit: number = 10,
   ) { 
-    if (categoryId || classifyId || supplierId || name || material || color || design) {
-      return await this.productsService.searchProduct(companyId, categoryId, classifyId, supplierId, name, material, color, design);
+    if (categoryId || classifyId || supplierId || name || code || isRestock) {
+      return await this.productsService.searchProduct(companyId, categoryId, classifyId, supplierId, name, code, isRestock, page, limit);
     } else {
-      return await this.productsService.getInforProducts(companyId);
+      return await this.productsService.getInforProducts(companyId, page, limit);
     }
   }
 
@@ -41,18 +42,20 @@ export class ProductsController {
   async getProductsInWarehouse(
     @GetUserInfor('companyId') companyId: number,
     @Param('warehouseId') warehouseId?: number,
-    @Query('supplierId') supplierId?: number, 
     @Query('categoryId') categoryId?: number,
     @Query('classifyId') classifyId?: number,
+    @Query('supplierId') supplierId?: number,
     @Query('name') name?: string,
-    @Query('material') material?: string,
-    @Query('color') color?: string,
-    @Query('design') design?: string
+    @Query('code') code?: string,
+    @Query('isRestock') isRestock?: string,
+    @Query('page') page: number = 1,
+    @Query('limit') limit: number = 10,
   ) {
-    if (!supplierId && !categoryId && !classifyId && !name) {
-      return await this.productsService.getAllProductInWarehouse(companyId, warehouseId);
+    if (categoryId || classifyId || supplierId || name || code) {
+      return await this.productsService.searchProductInWarehouse(companyId, warehouseId, supplierId, categoryId, classifyId, name, code, isRestock, page, limit);
+
     } else {
-      return await this.productsService.searchProductInWarehouse(companyId, warehouseId, supplierId, categoryId, classifyId, name, material, color, design);
+      return await this.productsService.getAllProductInWarehouse(companyId, warehouseId);
     }
   }
 
@@ -76,7 +79,7 @@ export class ProductsController {
   @Delete()
   async deleteProducts(
     @GetUserInfor('companyId') companyId: number,
-    @Body('productIds', ParseIntArrayPipe) productIds: number[]
+    @Body('productIds', new ParseIntArrayPipe('productIds')) productIds: number[]
   ): Promise<{ message: string; }> {
     return await this.productsService.deleteProducts(productIds, companyId);
   }

@@ -116,7 +116,7 @@ model Suppliers {
 
 model Categories {
   Id Int @id @default(autoincrement())
-  Code String @unique
+  Code String
   Name String
   CreateAt DateTime @default(now())
   WarehouseId Int
@@ -136,7 +136,7 @@ model Categories {
 
 model Classifies {
   Id Int @id @default(autoincrement())
-  Code String @unique
+  Code String
   Name String
   CreateAt DateTime @default(now())
   CategoryId Int
@@ -231,7 +231,7 @@ model Inventory_Items {
 model Customers {
   Id Int @id @default(autoincrement())
   Name String
-  Phone String @unique
+  Phone String
   Address String
   Email String?
   CreateAt DateTime @default(now())

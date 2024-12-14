@@ -32,9 +32,9 @@ export class PurchaseOrdersController {
     @Query('code') code: string,
     @Query('date') date: Date,
     @Query('status') status: PurchaseOrderStatus,
-    @Query('warehouseIds', ParseIntArrayPipe) warehouseIds: number[],
-    @Query('supplierIds', ParseIntArrayPipe) supplierIds: number[],
-    @Query('staffIds', ParseIntArrayPipe) staffIds: number[],
+    @Query('warehouseIds', new ParseIntArrayPipe('warehouseIdsv')) warehouseIds: number[],
+    @Query('supplierIds', new ParseIntArrayPipe('supplierIds')) supplierIds: number[],
+    @Query('staffIds', new ParseIntArrayPipe('staffIds')) staffIds: number[],
   ) {
     return await this.purchaseOrdersService.searchPurchaseOrders(companyId, status, code, warehouseIds, date, supplierIds, staffIds);
   }
@@ -77,7 +77,7 @@ export class PurchaseOrdersController {
   @Delete()
   async deletePurchaseOrder(
     @GetUserInfor('companyId') companyId: number,
-    @Body('ids', ParseIntArrayPipe) ids: number[]
+    @Body('ids', new ParseIntArrayPipe('ids')) ids: number[]
   ) { 
     return await this.purchaseOrdersService.deletePurchaseOrder(companyId, ids);
   }

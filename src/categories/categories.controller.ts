@@ -14,18 +14,22 @@ export class CategoriesController {
     @GetUserInfor('companyId') companyId: number,
     @Query('warehouseId') warehouseId?: number,
     @Query('supplierId') supplierId?: number,
-    @Query('name') name?: string
+    @Query('name') name?: string,
+    @Query('code') code?: string,
+    @Query('isRestock') isRestock?: string,
+    @Query('page') page: number = 1,
+    @Query('limit') limit: number = 10,
   ) {
-    if (!warehouseId && !supplierId && !name) {
-      return await this.categoriesService.getCategories(companyId);
+    if (!warehouseId && !supplierId && !name && !isRestock) {
+      return await this.categoriesService.getCategories(companyId, page, limit);
     } else {
-      return await this.categoriesService.searchCategories(companyId, warehouseId, supplierId, name);
+      return await this.categoriesService.searchCategories(companyId, warehouseId, supplierId, name, code, isRestock, page, limit);
     }
   }
 
   @Post()
   async createCategory(
-    @GetUserInfor('companyId') companyId,
+    @GetUserInfor('companyId') companyId: number,
     @Body() dto: InsertCategory
   ) {
     return await this.categoriesService.createCategory(companyId, dto);
@@ -33,7 +37,7 @@ export class CategoriesController {
 
   @Patch(':id')
   async updateCategory(
-    @GetUserInfor('companyId') companyId,
+    @GetUserInfor('companyId') companyId: number,
     @Param('id', ParseIntPipe) categoryId: number,
     @Body() dto: UpdateCategory
   ) {
@@ -43,7 +47,7 @@ export class CategoriesController {
   @Delete()
   async deleteCategory(
     @GetUserInfor('companyId') companyId: number,
-    @Body('categoryIds', ParseIntArrayPipe) categoryIds: number[]
+    @Body('categoryIds', new ParseIntArrayPipe('categoryIds')) categoryIds: number[]
   ): Promise<{ message: string; }> {
     return await this.categoriesService.deleteCategory(categoryIds, companyId);
   }

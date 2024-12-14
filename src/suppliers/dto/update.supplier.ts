@@ -1,4 +1,4 @@
-import { IsOptional, IsString } from "class-validator";
+import { IsBoolean, IsOptional, IsString } from "class-validator";
 
 export class UpdateSupplier {
   @IsString()
@@ -8,4 +8,8 @@ export class UpdateSupplier {
   @IsString()
   @IsOptional()
   origin?: string
+
+  @IsBoolean()
+  @IsOptional()
+  isCollab?: boolean
 }

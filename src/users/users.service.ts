@@ -35,7 +35,7 @@ export class UsersService {
 
     return {
       data: users,
-      totalElemnts: totalCount,
+      totalRecord: totalCount,
       // page,
       // limit,
     }
@@ -110,7 +110,7 @@ export class UsersService {
     ])
     return {
       data: users,
-      totalElemnts: totalCount,
+      totalRecord: totalCount,
       page,
       limit,
     }

@@ -8,31 +8,147 @@ import { checkStock } from '@/helpers';
 export class ClassifiesService {
   constructor(private prismaService: PrismaService) { }
   
-  async getClassifies(companyId: number) {
-    return await this.prismaService.classifies.findMany({
-      where: { CompanyId: companyId },
-    });
+  async getClassifies(companyId: number, page: number = 1, limit: number = 10) {
+    const skip = (page - 1) * limit;
+    const [classifies, totalCount] = await this.prismaService.$transaction([
+      this.prismaService.classifies.findMany({
+        where: { CompanyId: companyId },
+        // skip,
+        // take: limit,
+        orderBy: {
+          Id: 'desc',
+        },
+        include: {
+          warehouse: {
+            select: {
+              Id: true,
+              Code: true,
+            }
+          },
+          suppliers: {
+            select: {
+              Id: true,
+              Code: true,
+            },
+          },
+          categories: {
+            select: {
+              Id: true,
+              Code: true,
+            },
+          }
+        }
+      }),
+      this.prismaService.classifies.count({
+        where: { CompanyId: companyId }
+      })
+    ]);
+    return {
+      data: classifies.map(classify => {
+        const { warehouse, suppliers, categories, ...classifyData } = classify;
+        return {
+          ...classifyData,
+          warehouseCode: warehouse.Code,
+          supplierCode: suppliers.Code,
+          categoryCode: categories.Code,
+        }
+      }),
+      totalRecord: totalCount,
+      page,
+      limit,
+    }
   }
 
-  async searchClassifies(companyId: number, warehouseId?: number, categoryId?:number ,supplierId?: number, name?: string) {
-    return await this.prismaService.classifies.findMany({
-      where: {
-        CompanyId: companyId,
-        ...(warehouseId && { WarehouseId: Number(warehouseId) }),
-        ...(supplierId && { SupplierId: Number(supplierId) }),
-        ...(categoryId && { CategoryId: Number(categoryId) }),
-        ...(name && {
-          Name: {
-            contains: name,
-            mode: 'insensitive',
+  async searchClassifies(companyId: number, warehouseId?: number, categoryId?:number ,supplierId?: number, name?: string, code?:string ,isRestock?: string, page: number = 1, limit: number = 10) {
+    const skip = (page - 1) * limit;
+    const [classifies, totalCount] = await this.prismaService.$transaction([
+      this.prismaService.classifies.findMany({
+        where: {
+          CompanyId: companyId,
+          ...(warehouseId && { WarehouseId: Number(warehouseId) }),
+          ...(supplierId && { SupplierId: Number(supplierId) }),
+          ...(categoryId && { CategoryId: Number(categoryId) }),
+          ...(name && {
+            Name: {
+              contains: name,
+              mode: 'insensitive',
+            }
+          }),
+          ...(code && {
+            Code: {
+              contains: code,
+              mode: 'insensitive',
+            }
+          }),
+          ...(isRestock && { IsRestock: isRestock === JSON.parse(isRestock) })
+        },
+        skip,
+        take: limit,
+        orderBy: {
+          Id: 'desc',
+        },
+        include: {
+          warehouse: {
+            select: {
+              Id: true,
+              Code: true,
+            }
+          },
+          suppliers: {
+            select: {
+              Id: true,
+              Code: true,
+            },
+          },
+          categories: {
+            select: {
+              Id: true,
+              Code: true,
+            },
           }
-        })
-      }
-    });
+        }
+      }),
+      this.prismaService.classifies.count({
+        where: {
+          CompanyId: companyId,
+          ...(warehouseId && { WarehouseId: Number(warehouseId) }),
+          ...(supplierId && { SupplierId: Number(supplierId) }),
+          ...(categoryId && { CategoryId: Number(categoryId) }),
+          ...(name && {
+            Name: {
+              contains: name,
+              mode: 'insensitive',
+            }
+          }),
+          ...(code && {
+            Code: {
+              contains: code,
+              mode: 'insensitive',
+            }
+          }),
+          ...(isRestock && { IsRestock: isRestock === JSON.parse(isRestock) })
+        }
+      })
+    ]);
+
+    return {
+      data: classifies.map(classify => {
+        const { warehouse, suppliers, categories, ...classifyData } = classify;
+        return {
+          ...classifyData,
+          warehouseCode: warehouse.Code,
+          supplierCode: suppliers.Code,
+          categoryCode: categories.Code,
+        }
+      }),
+      totalRecord: totalCount,
+      page,
+      limit
+    }
   }
 
   async createClassify(companyId: number, classifyInfo: InsertClassify) {
-    const checkCodeClass = await this.prismaService.classifies.findUnique({ where: { Code: classifyInfo.code, CompanyId: companyId } });
+    const checkCodeClass = await this.prismaService.classifies.findFirst({ where: { Code: classifyInfo.code, CompanyId: companyId, WarehouseId: classifyInfo.warehouseId } });
 
     if (checkCodeClass) {
       throw new ForbiddenException('Classify code already exists');

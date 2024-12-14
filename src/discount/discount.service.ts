@@ -25,7 +25,7 @@ export class DiscountService {
 
     return {
       data: result,
-      totalElemnts: result._count._all,
+      totalRecord: result._count._all,
       page,
       limit,
     }

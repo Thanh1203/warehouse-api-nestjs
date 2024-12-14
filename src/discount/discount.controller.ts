@@ -60,6 +60,6 @@ export class DiscountController {
   @Delete()
   async deleteDiscounts(
     @GetUserInfor('companyId') companyId: number,
-    @Body('ids', ParseIntArrayPipe) ids: number[]
+    @Body('ids', new ParseIntArrayPipe('ids')) ids: number[]
   ) { }
 }

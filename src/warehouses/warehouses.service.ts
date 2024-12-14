@@ -34,7 +34,7 @@ export class WarehousesService {
           staffName: staff.Name
         }
       }),
-      totalElemnts: totalCount,
+      totalRecord: totalCount,
       // page,
       // limit,
     }
@@ -80,7 +80,7 @@ export class WarehousesService {
           staffName: staff.Name
         }
       }),
-      totalElemnts: totalCount,
+      totalRecord: totalCount,
       // page,
       // limit,
     }
@@ -100,9 +100,9 @@ export class WarehousesService {
     return newWh;
   }
 
-  async updateWarehouse(warehouseId: number, whInfo: UpdateWarehouse) {
+  async updateWarehouse(companyId: number, warehouseId: number, whInfo: UpdateWarehouse) {
     await this.prismaService.warehouses.findUnique({
-      where: {Id: warehouseId}
+      where: {CompanyId: companyId, Id: warehouseId}
     }).catch((error) => {
       console.log(error);
       throw new ForbiddenException('Cannot find warehouse');    
@@ -118,7 +118,7 @@ export class WarehousesService {
     })
   }
 
-  async deleteWarehouse(warehouseId: number) {
+  async deleteWarehouse(companyId: number, warehouseId: number) {
     const whDelete = await this.prismaService.warehouses.findUnique({
       where: {Id: warehouseId}
     })

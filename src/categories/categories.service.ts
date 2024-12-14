@@ -1,36 +1,122 @@
 import { ForbiddenException, Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { InsertCategory, UpdateCategory } from './dto';
-import { checkStock } from '@/helpers';
 
 @Injectable()
 export class CategoriesService {
   constructor(private prismaService: PrismaService) {}
 
-  async getCategories(companyId: number) {
-    return await this.prismaService.categories.findMany({
-      where: { CompanyId: companyId },
-    });
+  async getCategories(companyId: number, page: number = 1, limit: number = 10) {
+    const skip = (page - 1) * limit;
+    const [categories, totalCount] = await this.prismaService.$transaction([
+      this.prismaService.categories.findMany({
+        where: { CompanyId: companyId },
+        // skip,
+        // take: limit,
+        include: {
+          warehouses: {
+            select: {
+              Id: true,
+              Name: true,
+            }
+          },
+          suppliers: {
+            select: {
+              Id: true,
+              Code: true,
+            },
+         }
+        },
+        orderBy: {
+          Id: 'desc',
+        }
+      }),
+      this.prismaService.categories.count({
+        where: { CompanyId: companyId }
+      })
+    ]);
+
+    return {
+      data: categories.map(cate => {
+        const { warehouses, suppliers, ...category } = cate;
+        return {
+          ...category,
+          warehouseName: warehouses.Name,
+          supplierCode: suppliers.Code,
+        }
+      }),
+      totalRecord: totalCount,
+      // page,
+      // limit,
+    };
   }
 
-  async searchCategories(companyId: number, warehouseId?: number, supplierId?: number, name?: string) {
-    return await this.prismaService.categories.findMany({
-      where: {
-        CompanyId: companyId,
-        ...(warehouseId && { WarehouseId: Number(warehouseId) }),
-        ...(supplierId && { SupplierId: Number(supplierId) }),
-        ...(name && {
-          Name: {
-            contains: name,
-            mode: 'insensitive',
+  async searchCategories(companyId: number, warehouseId?: number, supplierId?: number, name?: string, code?:string, isRestock?: string, page: number = 1, limit: number = 10) {
+    const skip = (page - 1) * limit;
+    const [categories, totalCount] = await this.prismaService.$transaction([
+      this.prismaService.categories.findMany({
+        where: {
+          CompanyId: companyId,
+          ...(warehouseId && { WarehouseId: Number(warehouseId) }),
+          ...(supplierId && { SupplierId: Number(supplierId) }),
+          ...(name && {
+            Name: {
+              contains: name,
+              mode: 'insensitive',
+            },
+          }),
+          ...(isRestock && { IsRestock: JSON.parse(isRestock) }),
+        },
+        include: {
+          warehouses: {
+            select: {
+              Id: true,
+              Name: true,
+            }
           },
-        }),
-      },
-    });
+          suppliers: {
+            select: {
+              Id: true,
+              Code: true,
+            },
+         }
+        }
+        // skip,
+        // take: limit,
+      }),
+      this.prismaService.categories.count({
+        where: {
+          CompanyId: companyId,
+          ...(warehouseId && { WarehouseId: Number(warehouseId) }),
+          ...(supplierId && { SupplierId: Number(supplierId) }),
+          ...(name && {
+            Name: {
+              contains: name,
+              mode: 'insensitive',
+            },
+          }),
+          ...(isRestock && { IsRestock: JSON.parse(isRestock) }),
+        },
+      })
+    ]);
+
+    return {
+      data: categories.map(cate => {
+        const { warehouses, suppliers, ...category } = cate;
+        return {
+          ...category,
+          warehouseName: warehouses.Name,
+          supplierCode: suppliers.Code,
+        }
+      }),
+      totalRecord: totalCount,
+      // page,
+      // limit,
+    };
   }
 
   async createCategory(companyId: number, cateInfo: InsertCategory) {
-    const checkCodeCate = await this.prismaService.categories.findUnique({ where: { Code: cateInfo.code, CompanyId: companyId } });
+    const checkCodeCate = await this.prismaService.categories.findFirst({ where: { Code: cateInfo.code, CompanyId: companyId, WarehouseId: cateInfo.warehouseId } });
 
     if (checkCodeCate) {
       throw new ForbiddenException('Category code already exists');
@@ -59,7 +145,7 @@ export class CategoriesService {
       where: { Id: categoryId, CompanyId: companyId },
       data: {
         Name: cateInfo.name,
-        IsRestock: cateInfo.isRestock,
+        IsRestock: JSON.parse(cateInfo.isRestock),
         ...(cateInfo.supplierId && { SupplierId: Number(cateInfo.supplierId) }),
         ...(cateInfo.warehouseId && { WarehouseId: Number(cateInfo.warehouseId) }),
       }
@@ -68,7 +154,6 @@ export class CategoriesService {
 
   async deleteCategory(categoryIds: number | number[], companyId: number): Promise<{ message: string }> {
     const ids = Array.isArray(categoryIds) ? categoryIds : [categoryIds];
-
     try {
       await this.prismaService.categories.updateMany({
         where: { Id: { in: ids }, CompanyId: companyId },
@@ -86,7 +171,7 @@ export class CategoriesService {
           await this.prismaService.products.deleteMany({ where: { CategoryId: { in: ids }, inventory_items: { every: { Quantity: 0 } } } });
           await this.prismaService.classifies.deleteMany({ where: { CategoryId: { in: ids }, product: { none: {} } } });
 
-          const stockMap = await checkStock(companyId, ids);
+          const stockMap = await this.checkStock(companyId, ids);
           for (const categoryId of ids) {
             if (!stockMap[categoryId]) {
               await this.prismaService.categories.delete({
@@ -99,5 +184,29 @@ export class CategoriesService {
         }
       }, 0);
     }
+  }
+
+  async checkStock(companyId: number, categoryIds: number[]): Promise<{ [key: number]: boolean }> {
+    const results = await this.prismaService.products.findMany({
+      where: {
+        CompanyId: companyId,
+        CategoryId: { in: categoryIds },
+        inventory_items: { some: { Quantity: { gt: 0 } } },
+      },
+      select: {
+        CategoryId: true,
+      },
+    });
+
+    const stockMap = categoryIds.reduce((acc, id) => {
+      acc[id] = false;
+      return acc;
+    }, {} as { [key: number]: boolean });
+
+    results.forEach(result => {
+      stockMap[result.CategoryId] = true;
+    });
+
+    return stockMap;
   }
 }
