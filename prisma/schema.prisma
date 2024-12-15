@@ -31,8 +31,6 @@ model Company {
   categories Categories[]
   classifies Classifies[]
   products Products[]
-  price_configuration Price_Configuration[]
-  inventory_items Inventory_Items[]
   customers Customers[]
   invoicesCompany Invoices[]
   purchase_orders Purchase_Orders[]
@@ -82,12 +80,11 @@ model Warehouses {
 
   categories Categories[]
   classifies Classifies[]
-  price_configuration Price_Configuration[]
-  inventory_items Inventory_Items[]
   transProductFrom StockTransfers[] @relation("FromWarehouse")
   transProductTo StockTransfers[] @relation("ToWarehouse")
   customers Customers[]
   invoices Invoices[]
+  products Products[]
 
   company Company @relation(fields: [CompanyId], references: [Id])
   staff Users @relation(fields: [StaffId], references: [Id])
@@ -155,9 +152,14 @@ model Classifies {
   @@map("classifies")  
 }
 
+enum ProductStatus {
+  ACTIVE
+  DEACTIVE
+}
+
 model Products {
   Id Int @id @default(autoincrement())
-  Code String @unique
+  Code String
   Name String
   CreateAt DateTime @default(now())
   UpdateAt DateTime @updatedAt
@@ -166,66 +168,29 @@ model Products {
   ClassifyId Int
   SupplierId Int
   CompanyId Int
+  WarehouseId Int
 
-  Size String
-  Material String
-  Color String
-  Design String
-  Describe String
-  IsRestock Boolean
+  Size String?
+  Material String?
+  Color String?
+  Design String?
+  Describe String?
+  Status ProductStatus @default(ACTIVE)
+  Price Float @default(0)
+  Quantity Int @default(0)
 
+  warehouses Warehouses @relation(fields: [WarehouseId], references: [Id])
   classifies Classifies @relation(fields: [ClassifyId], references: [Id])
   categories Categories @relation(fields: [CategoryId], references: [Id])
   suppliers Suppliers @relation(fields: [SupplierId], references: [Id])
   company Company @relation(fields: [CompanyId], references: [Id])
 
-  price_configuration Price_Configuration[]
-  inventory_items Inventory_Items[]
   invoice_details Invoice_Details[]
   purchase_order_details Purchase_Order_Details[]
   purchase_return_details Purchase_Return_Details[]
   stockTransfers_details StockTransfers_Details[]
 
   @@map("products")
-}
-
-model Price_Configuration {
-  Id Int @id @default(autoincrement())
-  ProductId Int
-  WarehouseId Int
-  CompanyId Int
-  Price Float @default(0)
-  CreateAt DateTime @default(now())
-  UpdateAt DateTime @updatedAt
-
-  products Products @relation(fields: [ProductId], references: [Id])
-  warehouse Warehouses @relation(fields: [WarehouseId], references: [Id])
-  company Company @relation(fields: [CompanyId], references: [Id])
-
-  @@map("price_configuration")
-}
-
-enum ProductStatus {
-  IN_STOCK
-  LOW_STOCK
-  OUT_OF_STOCK
-}
-
-model Inventory_Items {
-  Id Int @id @default(autoincrement())
-  ProductId Int
-  WarehouseId Int
-  CompanyId Int
-  Quantity Int @default(0)
-  CreateAt DateTime @default(now())
-  UpdateAt DateTime @updatedAt
-  Status ProductStatus @default(OUT_OF_STOCK)
-
-  products Products @relation(fields: [ProductId], references: [Id])
-  warehouse Warehouses @relation(fields: [WarehouseId], references: [Id])
-  company Company @relation(fields: [CompanyId], references: [Id])
-
-  @@map("inventory_items")
 }
 
 model Customers {
@@ -318,7 +283,7 @@ model Purchase_Orders {
   UpdateAt DateTime @updatedAt
   Status PurchaseOrderStatus @default(PENDING)
   CompanyId Int
-  WarehouseIds Int[]
+  WarehouseId Int
 
   suppliers Suppliers @relation(fields: [SupplierId], references: [Id])
   company Company @relation(fields: [CompanyId], references: [Id])

@@ -1,7 +1,6 @@
 import { ForbiddenException, Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { InsertSupplier, UpdateSupplier } from './dto';
-import { checkStock } from '@/helpers';
 
 @Injectable()
 export class SuppliersService {
@@ -114,7 +113,7 @@ export class SuppliersService {
     } finally {
       setTimeout(async () => {
         try {
-          await this.prismaService.products.deleteMany({ where: { SupplierId: { in: ids }, inventory_items: { every: { Quantity: 0 } } } });
+          await this.prismaService.products.deleteMany({ where: { SupplierId: { in: ids }, Quantity: 0 } });
           await this.prismaService.classifies.deleteMany({ where: { SupplierId: { in: ids }, product: { none: {} } } });
           await this.prismaService.categories.deleteMany({ where: { SupplierId: { in: ids }, classifies: { none: {} } } });
 
@@ -141,7 +140,7 @@ export class SuppliersService {
       where: {
         CompanyId: companyId,
         SupplierId: { in: supplierIds },
-        inventory_items: { some: { Quantity: { gt: 0 } } },
+        Quantity: { gt: 0 },
       },
       select: {
         SupplierId: true,

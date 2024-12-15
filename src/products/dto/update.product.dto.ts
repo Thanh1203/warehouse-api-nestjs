@@ -1,3 +1,4 @@
+import { ProductStatus } from "@prisma/client";
 import { Transform } from "class-transformer";
 import { IsBoolean, IsNumber, IsOptional, IsString } from "class-validator";
 
@@ -21,6 +22,11 @@ export class UpdateProduct {
   @IsOptional()
   supplierId?: number
 
+  @Transform(({ value }) => parseInt(value, 10))
+  @IsNumber()
+  @IsOptional()
+  warehouseId?: number
+
   @IsString()
   @IsOptional()
   size?: string
@@ -43,6 +49,5 @@ export class UpdateProduct {
 
   @IsString()
   @IsOptional()
-  @IsBoolean()
-  isRestock?:boolean
+  status?: ProductStatus
 }

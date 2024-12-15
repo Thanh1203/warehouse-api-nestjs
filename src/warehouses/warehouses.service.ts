@@ -127,7 +127,7 @@ export class WarehousesService {
       throw new ForbiddenException('Cannot find warehouse');    
     }
 
-    const checkProductInWh = await this.prismaService.inventory_Items.findFirst({
+    const checkProductInWh = await this.prismaService.products.findFirst({
       where: { WarehouseId: warehouseId, Quantity: { gt: 0 } }
     })
 
@@ -136,7 +136,7 @@ export class WarehousesService {
     }
 
     try {
-      await this.prismaService.inventory_Items.deleteMany({ where: { WarehouseId: warehouseId } });
+      await this.prismaService.products.deleteMany({ where: { WarehouseId: warehouseId } });
       await this.prismaService.classifies.deleteMany({ where: { WarehouseId: warehouseId } });
       await this.prismaService.categories.deleteMany({ where: { WarehouseId: warehouseId } });
     } catch (error) {

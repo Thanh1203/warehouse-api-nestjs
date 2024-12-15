@@ -80,9 +80,7 @@ export class PurchaseOrdersService {
 
     const warehouses: WarehousePurchaseOrder[] = await this.prismaService.warehouses.findMany({
       where: {
-        Id: {
-          in: purchaseOrderDetail.WarehouseIds
-        }
+        Id: purchaseOrderDetail.WarehouseId
       },
       select: {
         Id: true,
@@ -115,16 +113,16 @@ export class PurchaseOrdersService {
     return result;
   }
 
-  async searchPurchaseOrders(companyId: number, status: PurchaseOrderStatus, code: string, warehouseIds: number[], createdAt: Date, supplierIds: number[], staffIds: number[]) {
+  async searchPurchaseOrders(companyId: number, code?: string, supplierId?: string, staffId?: string, createAt?: Date, status?: string, warehouseId?: string) {
     const result = await this.prismaService.purchase_Orders.findMany({
       where: {
       CompanyId: companyId,
-      ...(status ? { Status: status } : {}),
-      ...(code ? { Code: code } : {}),
-      ...(warehouseIds ? { WarehouseIds: { hasSome: warehouseIds } } : {}),
-      ...(createdAt ? { CreateAt: { gte: createdAt, lte: new Date() } } : {}),
-      ...(supplierIds ? { SupplierId: { in: supplierIds } } : {}),
-      ...(staffIds ? { StaffId: { in: staffIds } } : {}),
+      ...(warehouseId && { WarehouseId: Number(warehouseId) }),
+      ...(code && { Code: { contains: code, mode: 'insensitive' } }),
+      ...(supplierId && { SupplierId: Number(supplierId) }),
+      ...(staffId && { StaffId: Number(staffId) }),
+      ...(createAt && { CreateAt: { gte: createAt } }),
+      ...(status && { Status: PurchaseOrderStatus[status] }),
       },
       include: {
       suppliers: {
@@ -156,26 +154,43 @@ export class PurchaseOrdersService {
       data: {
         Code: purchaseOrderData.code,
         SupplierId: purchaseOrderData.supplierId,
-        WarehouseIds: {
-          set: purchaseOrderData.WarehouseIds,
-        },
+        WarehouseId: Number(purchaseOrderData.warehouseId),
         StaffId: purchaseOrderData.staffId,
         CompanyId: companyId,
         Total: purchaseOrderData.total,
-        Status: purchaseOrderData.status,
+        Status: ProductOrderStatus[dto.status],
         purchase_order_details: {
           create: detail.map(item => ({
             ProductId: item.productId,
             Quantity: item.quantity,
             Price: item.price,
             Total: item.total,
-          }))
+            Status: ProductOrderStatus[dto.status],
+          })),
         }
       }
     });
 
+    await Promise.all(
+      dto.detail.map(product =>
+        this.prismaService.products.update({
+          where: {
+            Id: product.productId,
+          },
+          data: {
+            Quantity: {
+              increment: product.quantity,
+            },
+            Price: product.price,
+          },
+        })
+      )
+    );
+
     return newPurchaseOrder;
   }
+
+  
 
   async updatePurchaseOrder(companyId: number, id: number, dto: UpdatePurchaseOrder) { 
     return await this.prismaService.purchase_Orders.update({
@@ -186,9 +201,7 @@ export class PurchaseOrdersService {
       data: {
         SupplierId: dto.supplierId,
         StaffId: dto.staffId,
-        WarehouseIds: {
-          set: dto.WarehouseIds,
-        },
+        WarehouseId: dto.WarehouseId,
         Status: dto.status,
         Total: dto.total,
       }

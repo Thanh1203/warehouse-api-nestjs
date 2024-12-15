@@ -39,7 +39,7 @@ export class UpdatePurchaseOrder {
   @IsOptional()
   staffId?: number;
 
-  WarehouseIds: number[];
+  WarehouseId: number;
 
   @IsNotEmpty()
   @IsString()

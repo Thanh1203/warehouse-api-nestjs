@@ -14,7 +14,6 @@ export class InsertCustomer{
   @IsNotEmpty()
   address: string;
 
-  @IsEmail()
   @IsOptional()
   email?: string;
 

@@ -1,4 +1,4 @@
-import { PurchaseOrderStatus } from "@prisma/client";
+import { ProductOrderStatus, PurchaseOrderStatus } from "@prisma/client";
 import { Transform, Type } from "class-transformer";
 import { ArrayNotEmpty, IsNotEmpty, IsNumber, IsOptional, IsString, ValidateNested } from "class-validator";
 
@@ -22,6 +22,10 @@ class InsertPurchaseOrderDetail {
   @IsNumber()
   @IsOptional()
   total?: number;
+
+  @IsString()
+  @IsOptional()
+  status?: ProductOrderStatus;
 }
 
 export class InsertPurchaseOrder {
@@ -39,7 +43,7 @@ export class InsertPurchaseOrder {
   @IsNotEmpty()
   staffId: number;
 
-  WarehouseIds: number[];
+  warehouseId: number;
 
   @IsNotEmpty()
   @IsString()

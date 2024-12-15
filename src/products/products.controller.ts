@@ -4,6 +4,7 @@ import { AtGuard } from 'src/auth/common/guards';
 import { GetUserInfor } from 'src/auth/common/decorators';
 import { InsertProduct, UpdateProduct } from './dto';
 import { ParseIntArrayPipe } from 'pipes';
+import { ProductStatus } from '@prisma/client';
 @UseGuards(AtGuard)
 @Controller('products')
 export class ProductsController {
@@ -12,17 +13,18 @@ export class ProductsController {
   @Get()
   async getProductInfo(
     @GetUserInfor('companyId') companyId: number,
+    @Query('warehouseId') warehouseId?: number,
     @Query('categoryId') categoryId?: number,
     @Query('classifyId') classifyId?: number,
     @Query('supplierId') supplierId?: number,
     @Query('name') name?: string,
     @Query('code') code?: string,
-    @Query('isRestock') isRestock?: string,
+    @Query('status') status?: ProductStatus,
     @Query('page') page: number = 1,
     @Query('limit') limit: number = 10,
   ) { 
-    if (categoryId || classifyId || supplierId || name || code || isRestock) {
-      return await this.productsService.searchProduct(companyId, categoryId, classifyId, supplierId, name, code, isRestock, page, limit);
+    if (categoryId || classifyId || supplierId || name || code || status || warehouseId) {
+      return await this.productsService.searchProduct(companyId, warehouseId, categoryId, classifyId, supplierId, name, code, status, page, limit);
     } else {
       return await this.productsService.getInforProducts(companyId, page, limit);
     }

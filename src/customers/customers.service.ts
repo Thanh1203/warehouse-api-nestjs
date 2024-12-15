@@ -53,7 +53,7 @@ export class CustomersService {
         WarehouseId: customerInfo.warehouseId
       }
     })
-  }
+  } 
   
   async updateCustomer(companyId: number, id: number, customerInfo: UpdateCustomer) { 
     return await this.prismaService.customers.update({

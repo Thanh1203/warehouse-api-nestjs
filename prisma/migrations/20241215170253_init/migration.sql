@@ -1,5 +1,8 @@
 -- CreateEnum
-CREATE TYPE "ProductStatus" AS ENUM ('IN_STOCK', 'LOW_STOCK', 'OUT_OF_STOCK');
+CREATE TYPE "StatusUser" AS ENUM ('ACTIVE', 'DEACTIVE');
+
+-- CreateEnum
+CREATE TYPE "ProductStatus" AS ENUM ('ACTIVE', 'DEACTIVE');
 
 -- CreateEnum
 CREATE TYPE "PurchaseOrderStatus" AS ENUM ('PENDING', 'RECEIVED', 'RECEIVING', 'SENT', 'SENDING', 'RECEIVED_PART', 'CANCELLED');
@@ -35,6 +38,7 @@ CREATE TABLE "users" (
     "CreateAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "UpdateAt" TIMESTAMP(3) NOT NULL,
     "hashedRT" TEXT,
+    "Status" "StatusUser" NOT NULL DEFAULT 'ACTIVE',
 
     CONSTRAINT "users_pkey" PRIMARY KEY ("Id")
 );
@@ -105,41 +109,17 @@ CREATE TABLE "products" (
     "ClassifyId" INTEGER NOT NULL,
     "SupplierId" INTEGER NOT NULL,
     "CompanyId" INTEGER NOT NULL,
-    "Size" TEXT NOT NULL,
-    "Material" TEXT NOT NULL,
-    "Color" TEXT NOT NULL,
-    "Design" TEXT NOT NULL,
-    "Describe" TEXT NOT NULL,
-    "IsRestock" BOOLEAN NOT NULL,
+    "WarehouseId" INTEGER NOT NULL,
+    "Size" TEXT,
+    "Material" TEXT,
+    "Color" TEXT,
+    "Design" TEXT,
+    "Describe" TEXT,
+    "Status" "ProductStatus" NOT NULL DEFAULT 'ACTIVE',
+    "Price" DOUBLE PRECISION NOT NULL DEFAULT 0,
+    "Quantity" INTEGER NOT NULL DEFAULT 0,
 
     CONSTRAINT "products_pkey" PRIMARY KEY ("Id")
-);
-
--- CreateTable
-CREATE TABLE "price_configuration" (
-    "Id" SERIAL NOT NULL,
-    "ProductId" INTEGER NOT NULL,
-    "WarehouseId" INTEGER NOT NULL,
-    "CompanyId" INTEGER NOT NULL,
-    "Price" DOUBLE PRECISION NOT NULL DEFAULT 0,
-    "CreateAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "UpdateAt" TIMESTAMP(3) NOT NULL,
-
-    CONSTRAINT "price_configuration_pkey" PRIMARY KEY ("Id")
-);
-
--- CreateTable
-CREATE TABLE "inventory_items" (
-    "Id" SERIAL NOT NULL,
-    "ProductId" INTEGER NOT NULL,
-    "WarehouseId" INTEGER NOT NULL,
-    "CompanyId" INTEGER NOT NULL,
-    "Quantity" INTEGER NOT NULL DEFAULT 0,
-    "CreateAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "UpdateAt" TIMESTAMP(3) NOT NULL,
-    "Status" "ProductStatus" NOT NULL DEFAULT 'OUT_OF_STOCK',
-
-    CONSTRAINT "inventory_items_pkey" PRIMARY KEY ("Id")
 );
 
 -- CreateTable
@@ -292,22 +272,13 @@ CREATE UNIQUE INDEX "users_Email_key" ON "users"("Email");
 CREATE UNIQUE INDEX "users_Phone_key" ON "users"("Phone");
 
 -- CreateIndex
+CREATE INDEX "users_Phone_Email_idx" ON "users"("Phone", "Email");
+
+-- CreateIndex
 CREATE UNIQUE INDEX "warehouses_Code_key" ON "warehouses"("Code");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "Suppliers_Code_key" ON "Suppliers"("Code");
-
--- CreateIndex
-CREATE UNIQUE INDEX "categories_Code_key" ON "categories"("Code");
-
--- CreateIndex
-CREATE UNIQUE INDEX "classifies_Code_key" ON "classifies"("Code");
-
--- CreateIndex
-CREATE UNIQUE INDEX "products_Code_key" ON "products"("Code");
-
--- CreateIndex
-CREATE UNIQUE INDEX "customers_Phone_key" ON "customers"("Phone");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "invoices_Code_key" ON "invoices"("Code");
@@ -361,6 +332,9 @@ ALTER TABLE "classifies" ADD CONSTRAINT "classifies_SupplierId_fkey" FOREIGN KEY
 ALTER TABLE "classifies" ADD CONSTRAINT "classifies_CompanyId_fkey" FOREIGN KEY ("CompanyId") REFERENCES "company"("Id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
+ALTER TABLE "products" ADD CONSTRAINT "products_WarehouseId_fkey" FOREIGN KEY ("WarehouseId") REFERENCES "warehouses"("Id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
 ALTER TABLE "products" ADD CONSTRAINT "products_ClassifyId_fkey" FOREIGN KEY ("ClassifyId") REFERENCES "classifies"("Id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
@@ -371,24 +345,6 @@ ALTER TABLE "products" ADD CONSTRAINT "products_SupplierId_fkey" FOREIGN KEY ("S
 
 -- AddForeignKey
 ALTER TABLE "products" ADD CONSTRAINT "products_CompanyId_fkey" FOREIGN KEY ("CompanyId") REFERENCES "company"("Id") ON DELETE RESTRICT ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "price_configuration" ADD CONSTRAINT "price_configuration_ProductId_fkey" FOREIGN KEY ("ProductId") REFERENCES "products"("Id") ON DELETE RESTRICT ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "price_configuration" ADD CONSTRAINT "price_configuration_WarehouseId_fkey" FOREIGN KEY ("WarehouseId") REFERENCES "warehouses"("Id") ON DELETE RESTRICT ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "price_configuration" ADD CONSTRAINT "price_configuration_CompanyId_fkey" FOREIGN KEY ("CompanyId") REFERENCES "company"("Id") ON DELETE RESTRICT ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "inventory_items" ADD CONSTRAINT "inventory_items_ProductId_fkey" FOREIGN KEY ("ProductId") REFERENCES "products"("Id") ON DELETE RESTRICT ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "inventory_items" ADD CONSTRAINT "inventory_items_WarehouseId_fkey" FOREIGN KEY ("WarehouseId") REFERENCES "warehouses"("Id") ON DELETE RESTRICT ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "inventory_items" ADD CONSTRAINT "inventory_items_CompanyId_fkey" FOREIGN KEY ("CompanyId") REFERENCES "company"("Id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "customers" ADD CONSTRAINT "customers_CompanyId_fkey" FOREIGN KEY ("CompanyId") REFERENCES "company"("Id") ON DELETE RESTRICT ON UPDATE CASCADE;

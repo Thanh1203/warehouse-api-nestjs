@@ -14,8 +14,18 @@ export class PurchaseOrdersController {
   @Get()
   async getAllPurchasesOrders(
     @GetUserInfor('companyId') companyId: number,
+    @Query('code') code?: string,
+    @Query('supplierId') supplierId?: string,
+    @Query('staffId') staffId?: string,
+    @Query('createAt') createAt?: Date,
+    @Query('status') status?: string,
+    @Query('warehouseId') warehouseId?: string,
   ) { 
-    return this.purchaseOrdersService.getAllPurchasesOrders(companyId);
+    if (code || supplierId || staffId || status || createAt || warehouseId) {
+      return this.purchaseOrdersService.searchPurchaseOrders(companyId, code, supplierId, staffId, createAt, status, warehouseId);
+    } else {
+      return this.purchaseOrdersService.getAllPurchasesOrders(companyId);
+    }
   }
   
   @Get(':id')
@@ -24,19 +34,6 @@ export class PurchaseOrdersController {
     @Param('id') id: number
   ) { 
     return this.purchaseOrdersService.getDetailPurchaseOrder(companyId, id);
-  }
-
-  @Get('search')
-  async searchPurchaseOrder(
-    @GetUserInfor('companyId') companyId: number,
-    @Query('code') code: string,
-    @Query('date') date: Date,
-    @Query('status') status: PurchaseOrderStatus,
-    @Query('warehouseIds', new ParseIntArrayPipe('warehouseIdsv')) warehouseIds: number[],
-    @Query('supplierIds', new ParseIntArrayPipe('supplierIds')) supplierIds: number[],
-    @Query('staffIds', new ParseIntArrayPipe('staffIds')) staffIds: number[],
-  ) {
-    return await this.purchaseOrdersService.searchPurchaseOrders(companyId, status, code, warehouseIds, date, supplierIds, staffIds);
   }
 
   @Post()

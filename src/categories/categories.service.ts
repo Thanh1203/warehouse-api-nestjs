@@ -168,7 +168,7 @@ export class CategoriesService {
     } finally {
       setTimeout(async () => {
         try {
-          await this.prismaService.products.deleteMany({ where: { CategoryId: { in: ids }, inventory_items: { every: { Quantity: 0 } } } });
+          await this.prismaService.products.deleteMany({ where: { CategoryId: { in: ids },  Quantity: 0 } });
           await this.prismaService.classifies.deleteMany({ where: { CategoryId: { in: ids }, product: { none: {} } } });
 
           const stockMap = await this.checkStock(companyId, ids);
@@ -191,7 +191,7 @@ export class CategoriesService {
       where: {
         CompanyId: companyId,
         CategoryId: { in: categoryIds },
-        inventory_items: { some: { Quantity: { gt: 0 } } },
+        Quantity: { gt: 0 }
       },
       select: {
         CategoryId: true,

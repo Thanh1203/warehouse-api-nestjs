@@ -4,7 +4,7 @@ import { IsBoolean, IsNotEmpty, IsNumber, IsOptional, IsString } from "class-val
 export class InsertProduct {
   @IsString()
   @IsNotEmpty()
-  code: string 
+  code: string
 
   @IsString()
   @IsNotEmpty()
@@ -24,6 +24,11 @@ export class InsertProduct {
   @IsNumber()
   @IsNotEmpty()
   supplierId: number
+
+  @Transform(({ value }) => parseInt(value, 10))
+  @IsNumber()
+  @IsNotEmpty()
+  warehouseId: number
 
   @IsString()
   @IsOptional()

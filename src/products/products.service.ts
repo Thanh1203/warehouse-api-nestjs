@@ -1,7 +1,7 @@
 import { ForbiddenException, Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { InsertProduct, UpdateProduct } from './dto';
-import { checkStock } from '@/helpers';
+import { ProductStatus } from '@prisma/client';
 
 @Injectable()
 export class ProductsService {
@@ -66,12 +66,13 @@ export class ProductsService {
 
   async searchProduct(
     companyId: number,
+    warehouseId?: number,
     categoryId?: number,
     classifyId?: number,
     supplierId?: number,
     name?: string,
     code?: string,
-    isRestock?: string,
+    status?: ProductStatus,
     page: number = 1,
     limit: number = 10,
   ) {
@@ -80,12 +81,13 @@ export class ProductsService {
       this.prismaService.products.findMany({
         where: {
           CompanyId: companyId,
-          ...(supplierId && { SupplierId: supplierId }),
-          ...(categoryId && { CategoryId: categoryId }),
-          ...(classifyId && { ClassifyId: classifyId }),
+          ...(warehouseId && { WarehouseId: Number(warehouseId) }),
+          ...(supplierId && { SupplierId: Number(supplierId) }),
+          ...(categoryId && { CategoryId: Number(categoryId) }),
+          ...(classifyId && { ClassifyId: Number(classifyId) }),
           ...(name && { Name: { contains: name, mode: 'insensitive' } }),
           ...(code && { Code: { contains: code, mode: 'insensitive' } }),
-          ...(isRestock && { IsRestock: JSON.parse(isRestock) }),
+          ...(status && { Status: ProductStatus[status] }),
         },
         orderBy: {
           Id: 'desc',
@@ -114,12 +116,13 @@ export class ProductsService {
       this.prismaService.products.count({
         where: {
           CompanyId: companyId,
-          ...(supplierId && { SupplierId: supplierId }),
-          ...(categoryId && { CategoryId: categoryId }),
-          ...(classifyId && { ClassifyId: classifyId }),
+          ...(warehouseId && { WarehouseId: Number(warehouseId) }),
+          ...(supplierId && { SupplierId: Number(supplierId) }),
+          ...(categoryId && { CategoryId: Number(categoryId) }),
+          ...(classifyId && { ClassifyId: Number(classifyId) }),
           ...(name && { Name: { contains: name, mode: 'insensitive' } }),
           ...(code && { Code: { contains: code, mode: 'insensitive' } }),
-          ...(isRestock && { IsRestock: JSON.parse(isRestock) }),
+          ...(status && { Status: ProductStatus[status] }),
         },
       }),
     ]);
@@ -182,7 +185,7 @@ export class ProductsService {
     return await this.prismaService.products.findMany({
       where: {
         CompanyId: companyId,
-        inventory_items: { every: { WarehouseId: Number(warehouseId) } },
+        WarehouseId: warehouseId,
       },
       include: {
         suppliers: {
@@ -225,10 +228,10 @@ export class ProductsService {
       this.prismaService.products.findMany({
         where: {
           CompanyId: companyId,
-          inventory_items: { every: { WarehouseId: warehouseId } },
-          ...(supplierId && { SupplierId: supplierId }),
-          ...(categoryId && { CategoryId: categoryId }),
-          ...(classifyId && { ClassifyId: classifyId }),
+          WarehouseId: warehouseId,
+          ...(supplierId && { SupplierId: Number(supplierId) }),
+          ...(categoryId && { CategoryId: Number(categoryId) }),
+          ...(classifyId && { ClassifyId: Number(classifyId) }),
           ...(name && { Name: { contains: name, mode: 'insensitive' } }),
           ...(code && { Code: { contains: code, mode: 'insensitive' } }),
           ...(isRestock && { IsRestock: JSON.parse(isRestock) }),
@@ -262,10 +265,10 @@ export class ProductsService {
       this.prismaService.products.count({
         where: {
           CompanyId: companyId,
-          inventory_items: { every: { WarehouseId: warehouseId } },
-          ...(supplierId && { SupplierId: supplierId }),
-          ...(categoryId && { CategoryId: categoryId }),
-          ...(classifyId && { ClassifyId: classifyId }),
+          WarehouseId: warehouseId,
+          ...(supplierId && { SupplierId: Number(supplierId) }),
+          ...(categoryId && { CategoryId: Number(categoryId) }),
+          ...(classifyId && { ClassifyId: Number(classifyId) }),
           ...(name && { Name: { contains: name, mode: 'insensitive' } }),
           ...(code && { Code: { contains: code, mode: 'insensitive' } }),
           ...(isRestock && { IsRestock: JSON.parse(isRestock) }),
@@ -290,10 +293,11 @@ export class ProductsService {
 
   // Create new product
   async createProduct(companyId: number, productInfo: InsertProduct) {
-    const checkAvilable = await this.prismaService.products.findUnique({
+    const checkAvilable = await this.prismaService.products.findFirst({
       where: {
         CompanyId: companyId,
         Code: productInfo.code,
+        WarehouseId: productInfo.warehouseId,
       }
     });
 
@@ -307,12 +311,12 @@ export class ProductsService {
           CategoryId: Number(productInfo.categoryId),
           ClassifyId: Number(productInfo.classifyId),
           SupplierId: Number(productInfo.supplierId),
-          Size: productInfo.size,
-          Material: productInfo.material,
-          Color: productInfo.color,
-          Design: productInfo.design,
-          Describe: productInfo.describe,
-          IsRestock: true,
+          WarehouseId: Number(productInfo.warehouseId),
+          Size: productInfo.size || null,
+          Material: productInfo.material || null,
+          Color: productInfo.color || null,
+          Design: productInfo.design || null,
+          Describe: productInfo.describe || null,
           CompanyId: companyId,
         },
       });
@@ -324,22 +328,36 @@ export class ProductsService {
     id: number,
     productInfo: UpdateProduct,
   ) {
+    const checkAvilable = await this.prismaService.products.findFirst({
+      where: {
+        Id: Number(id),
+        CompanyId: companyId,
+        WarehouseId: Number(productInfo.warehouseId),
+      },
+    });
+
+    if (!checkAvilable) {
+      throw new ForbiddenException('Product not exists');
+    }
+
     return await this.prismaService.products.update({
       data: {
         Name: productInfo.name,
         CategoryId: Number(productInfo.categoryId),
         ClassifyId: Number(productInfo.classifyId),
         SupplierId: Number(productInfo.supplierId),
+        WarehouseId: Number(productInfo.warehouseId),
         Size: productInfo.size,
         Material: productInfo.material,
         Color: productInfo.color,
         Design: productInfo.design,
         Describe: productInfo.describe,
-        IsRestock: productInfo.isRestock,
+        Status: productInfo.status,
       },
       where: {
-        Id: id,
+        Id: Number(id),
         CompanyId: companyId,
+        WarehouseId: productInfo.warehouseId,
       },
     });
   }
@@ -352,7 +370,7 @@ export class ProductsService {
           CompanyId: companyId,
         },
         data: {
-          IsRestock: false,
+          Status: 'DEACTIVE',
         },
       });
 
@@ -364,14 +382,14 @@ export class ProductsService {
     } finally {
       setTimeout(async () => {
         try {
-          await this.prismaService.inventory_Items.deleteMany({
+          await this.prismaService.products.deleteMany({
             where: {
-              ProductId: { in: ids },
+              Id: { in: ids },
               Quantity: 0,
             },
           });
 
-          const stockMap = await checkStock(companyId, ids);
+          const stockMap = await this.checkStock(companyId, ids);
           for (const productId of ids) {
             if (!stockMap[productId]) {
               await this.prismaService.products.delete({
@@ -385,4 +403,28 @@ export class ProductsService {
       }, 0);
     }
   }
+
+  async checkStock(companyId: number, productIds: number[]) {
+    const results = await this.prismaService.products.findMany({
+      where: {
+        CompanyId: companyId,
+        Id: { in: productIds },
+        Quantity: { gt: 0 }
+      },
+      select: {
+        Id: true,
+      }
+    });
+
+    const stockMap = productIds.reduce((acc, id) => {
+      acc[id] = false;
+      return acc;
+    }, {} as { [key: number]: boolean });
+
+    results.forEach(result => {
+      stockMap[result.Id] = true;
+    });
+
+    return stockMap;
+  }  
 }
